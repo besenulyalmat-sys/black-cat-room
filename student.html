@@ -8,9 +8,22 @@
 body {
     margin:0;
     font-family:Arial;
-    background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
+    background: url("123.png") no-repeat center center fixed;
+    background-size: cover;
     color:#00ff9d;
-    text-align:center;
+    position: relative;
+}
+
+/* затемнение для читаемости */
+body::before {
+    content:"";
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.75);
+    z-index:-1;
 }
 
 .container {
@@ -82,6 +95,10 @@ button:hover {
 <button onclick="submitAnswer()">Submit</button>
 
 <div id="rankDisplay" style="margin-top:20px; font-size:20px;"></div>
+<h3>🏆 Общий рейтинг:</h3>
+<div id="studentLeaderboard"></div>
+<div id="backgroundLeaderboard" 
+     style="margin-top:20px; opacity:0.8;"></div>
 
 </div>
 
@@ -106,59 +123,68 @@ let currentRoom = "";
 let currentLevel = 1;
 
 // ===== JOIN ROOM =====
+// ===== JOIN ROOM =====
 window.joinRoom = function() {
+
   const room = document.getElementById("roomCode").value;
   const name = document.getElementById("studentName").value;
 
-  if(!room || !name) return alert("Enter room and name");
+  if (!room || !name) 
+    return alert("Enter room and name");
 
   currentRoom = room;
 
-  // подписка на задание
+  // ===== Подписка на задание =====
   const taskRef = ref(db, "rooms/" + room + "/task");
+
   onValue(taskRef, (snapshot) => {
     document.getElementById("task").innerText =
       snapshot.val() || "Waiting...";
   });
 
-  // подписка на очки
+  // ===== Подписка на очки =====
   const scoreRef = ref(db, "rooms/" + room + "/scores/" + name);
 
   onValue(scoreRef, (snapshot) => {
-    const points = snapshot.val();
-    if(points == null) return;
 
-    updateLevel(points);
+    const points = snapshot.val() || 0;
+
+    // прогресс до 10
+    let progress = Math.min(points, 10);
+
+    // уровень
+    let level = "Новичок";
+    if (points >= 3) level = "Котёнок";
+    if (points >= 6) level = "Охотник";
+    if (points >= 10) level = "Чёрный Лорд";
+
+    document.getElementById("rankDisplay").innerHTML = `
+      🐱 Очки: ${points} / 10<br>
+      🎖 Уровень: ${level}
+    `;
   });
+
+  // ===== Подписка на leaderboard (фон-таблица) =====
+  const scoresRef = ref(db, "rooms/" + room + "/scores");
+
+  onValue(scoresRef, (snapshot) => {
+    const scores = snapshot.val();
+    const board = document.getElementById("backgroundLeaderboard");
+
+    if (!scores) return;
+
+    const sorted = Object.entries(scores)
+      .sort((a,b) => b[1] - a[1]);
+
+    board.innerHTML = "<h3>🏆 Лидеры</h3>";
+
+    sorted.slice(0,5).forEach(([name, pts]) => {
+      board.innerHTML += `${name} — ${pts} pts<br>`;
+    });
+  });
+
 };
 
-// ===== ПРОКАЧКА =====
-function updateLevel(points) {
-
-  let rank = "🐾 Новичок";
-  let catImg = "cat-level1.jpg.jpg";
-  let newLevel = 1;
-
-  if (points >= 3) {
-    rank = "🐱 Котёнок";
-    catImg = "cat-level2.jpg.jpg";
-    newLevel = 2;
-  }
-
-  if (points >= 7) {
-    rank = "😼 Охотник";
-    catImg = "cat-level3.jpg.jpg";
-    newLevel = 3;
-  }
-
-  if (points >= 10) {
-    rank = "👑 Король Кот";
-    catImg = "cat-king.jpg.jpg";
-    newLevel = 4;
-  }
-
-  document.getElementById("rankDisplay").innerText =
-    "Очки: " + points + " / 10\nУровень: " + rank;
 
   // ✨ Анимация при повышении
   if(newLevel > currentLevel) {
