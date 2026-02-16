@@ -83,6 +83,7 @@ color:#00ff9d;
 border:1px solid #00ff9d;
 border-radius:8px;
 ">
+<input id="roomCode" placeholder="Room code..." />
 
 <textarea id="taskInput" placeholder="Write your task here..."></textarea>
 <button onclick="addTask()">Add Task</button>
@@ -97,40 +98,30 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  apiKey: "ТВОЙ_KEY",
   authDomain: "black-cat-room.firebaseapp.com",
   databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "black-cat-room",
   storageBucket: "black-cat-room.firebasestorage.app",
   messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
+  appId: "1:80028312826:web:ee918db88c71a0c1335543"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 window.addTask = function () {
+  const roomCode = document.getElementById("roomCode").value;
   const text = document.getElementById("taskInput").value;
-  const room = document.getElementById("roomCode").value;
 
-  if (text.trim() === "" || room.trim() === "") return;
+  if (!roomCode || !text) return alert("Введите код комнаты и задание");
 
-  set(ref(db, "rooms/" + room + "/currentTask"), text);
+  set(ref(db, "rooms/" + roomCode + "/task"), text);
 
-  document.getElementById("taskInput").value = "";
-};
-
-
-  // Добавляем карточку визуально
-  const taskDiv = document.createElement("div");
-  taskDiv.className = "task-card";
-  taskDiv.innerText = text;
-  document.getElementById("tasks").appendChild(taskDiv);
-
-  document.getElementById("taskInput").value = "";
+  alert("Задание отправлено в комнату " + roomCode);
 };
 </script>
+
 
 
 
