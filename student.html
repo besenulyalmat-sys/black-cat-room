@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ы<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -51,6 +51,7 @@ button {
 
 <textarea id="answerInput" placeholder="Write answer..."></textarea>
 <button onclick="submitAnswer()">Submit</button>
+<div id="rankDisplay" style="margin-top:15px; font-size:18px; color:#00ff9d;"></div>
 
 </div>
 
@@ -70,6 +71,24 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+// авто-обновление очков
+onValue(ref(db, "rooms/" + currentRoom + "/scores"), (snapshot) => {
+  const scores = snapshot.val();
+  if (!scores) return;
+
+  const myName = document.getElementById("studentName").value;
+  if (scores[myName]) {
+    const points = scores[myName];
+
+    let rank = "🐾 Новичок";
+    if (points >= 5) rank = "🐱 Котёнок";
+    if (points >= 10) rank = "😼 Охотник";
+    if (points >= 20) rank = "👑 Чёрный Лорд";
+
+    document.getElementById("rankDisplay").innerText =
+      "Очки: " + points + " | Ранг: " + rank;
+  }
+});
 
 let currentRoom = "";
 
