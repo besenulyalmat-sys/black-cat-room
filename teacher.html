@@ -83,22 +83,6 @@ button:hover {
 
 </div>
 
-<script>
-function addTask() {
-    let text = document.getElementById("taskInput").value;
-    if (text.trim() === "") return;
-
-    localStorage.setItem("currentTask", text);
-
-    let taskDiv = document.createElement("div");
-    taskDiv.className = "task-card";
-    taskDiv.innerText = text;
-
-    document.getElementById("tasks").appendChild(taskDiv);
-    document.getElementById("taskInput").value = "";
-}
-</script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -117,12 +101,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Отправка задания
 window.addTask = function () {
   const text = document.getElementById("taskInput").value;
+  if (text.trim() === "") return;
+
+  // Сохраняем в Firebase
   set(ref(db, "currentTask"), text);
+
+  // Добавляем карточку визуально
+  const taskDiv = document.createElement("div");
+  taskDiv.className = "task-card";
+  taskDiv.innerText = text;
+  document.getElementById("tasks").appendChild(taskDiv);
+
+  document.getElementById("taskInput").value = "";
 };
 </script>
+
 
 
 </body>
