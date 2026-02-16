@@ -127,26 +127,37 @@ window.sendTask = function () {
 
   set(ref(db, "rooms/" + roomCode + "/task"), taskText);
 
-  // Авто-обновление ответов
-  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
+ // Авто-обновление ответов
+const answersRef = ref(db, "rooms/" + roomCode + "/answers");
 
-  onValue(answersRef, (snapshot) => {
-    const answers = snapshot.val();
-    const container = document.getElementById("answersContainer");
-    container.innerHTML = "";
+onValue(answersRef, (snapshot) => {
+  const answers = snapshot.val();
+  const container = document.getElementById("answersContainer");
+  container.innerHTML = "";
 
-    if (!answers) return;
+  if (!answers) return;
 
-    for (let name in answers) {
-      const div = document.createElement("div");
-      div.className = "answer-card";
-      div.innerHTML = `
-        <b>${name}</b>: ${answers[name]}
-        <br>
-        <button onclick="givePoint('${name}')">+1 🐾</button>
-      `;
-      container.appendChild(div);
-    }
+  for (let name in answers) {
+    const div = document.createElement("div");
+    div.className = "answer-card";
+
+    div.innerHTML = `
+      <b>${name}</b>: ${answers[name]}
+      <br><br>
+      <button onclick="giveScore('${name}', 0.5)">0.5</button>
+      <button onclick="giveScore('${name}', 1)">1</button>
+      <button onclick="giveScore('${name}', 1.5)">1.5</button>
+      <button onclick="giveScore('${name}', 2)">2</button>
+      <button onclick="giveScore('${name}', 2.5)">2.5</button>
+      <button onclick="giveScore('${name}', 3)">3</button>
+    `;
+
+    container.appendChild(div);
+  }
+});
+
+}
+
   });
 
   // 🔥 Авто-обновление leaderboard
@@ -178,16 +189,20 @@ window.sendTask = function () {
 };
 
 // 🎮 Начисление очков
-window.givePoint = async function(studentName) {
-  if (!currentRoom) return alert("Нет активной комнаты");
+window.giveScore = async function(studentName, value) {
+  const roomCode = document.getElementById("roomCode").value;
+  if (!roomCode) return alert("Enter room code");
 
-  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
+  const scoreRef = ref(db, "rooms/" + roomCode + "/scores/" + studentName);
 
   const snapshot = await get(scoreRef);
-  const currentScore = snapshot.exists() ? snapshot.val() : 0;
+  let currentScore = snapshot.exists() ? snapshot.val() : 0;
 
-  await set(scoreRef, currentScore + 1);
+  await set(scoreRef, parseFloat(currentScore) + parseFloat(value));
+
+  alert("Added " + value + " points to " + studentName);
 };
+
 
 // 🧹 Очистка ответов
 window.clearAnswers = function () {
