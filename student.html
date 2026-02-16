@@ -67,6 +67,16 @@ button:hover {
 <div class="task-card">
 <h3>Task</h3>
 <p id="taskText">Waiting for teacher...</p>
+<input type="text" id="roomCode" placeholder="Enter room code..." style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#111;
+color:#00ff9d;
+border:1px solid #00ff9d;
+border-radius:8px;
+">
+<button onclick="joinRoom()">Join</button>
 
 <textarea placeholder="Write your answer here..."></textarea>
 <button>Submit</button>
@@ -90,6 +100,19 @@ setInterval(loadTask, 2000);
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+window.joinRoom = function () {
+  const room = document.getElementById("roomCode").value;
+
+  const taskRef = ref(db, "rooms/" + room + "/currentTask");
+
+  onValue(taskRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      document.getElementById("currentTask").innerText = data;
+    }
+  });
+};
 
 const firebaseConfig = {
   apiKey: "ТВОЙ_КЛЮЧ",
