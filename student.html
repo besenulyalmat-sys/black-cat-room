@@ -74,6 +74,19 @@ button:hover {
 </div>
 
 </div>
+<script>
+function loadTask() {
+    let task = localStorage.getItem("currentTask");
+    if (task) {
+        document.getElementById("taskText").innerText = task;
+    }
+}
+
+loadTask();
+
+// обновление каждые 2 секунды
+setInterval(loadTask, 2000);
+</script>
 
 </body>
 </html>
