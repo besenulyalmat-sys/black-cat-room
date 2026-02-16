@@ -5,119 +5,127 @@
 <title>Black Cat Room – Student</title>
 
 <style>
-body {
-    margin:0;
-    font-family:Arial;
-    background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
-    color:#00ff9d;
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
+  color:#00ff9d;
 }
-.container {
-    width:90%;
-    margin:auto;
-    margin-top:30px;
+.container{width:90%;margin:auto;margin-top:30px;}
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  background:#111;
+  color:#00ff9d;
+  border:1px solid #00ff9d;
+  border-radius:8px;
 }
-input, textarea {
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    background:#111;
-    color:#00ff9d;
-    border:1px solid #00ff9d;
-    border-radius:8px;
+button{
+  padding:8px 15px;
+  background:#00ff9d;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
 }
-button {
-    padding:10px 20px;
-    background:#00ff9d;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
+
+@keyframes glow{
+  0%{text-shadow:0 0 5px #00ff9d;}
+  50%{text-shadow:0 0 20px #00ff9d;}
+  100%{text-shadow:0 0 5px #00ff9d;}
+}
+.rank-animate{
+  animation:glow 1s ease-in-out;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-<h1>🐾 Black Cat Room – Student</h1>
+<h2>🐾 Black Cat Room – Student</h2>
 
 <input id="roomCode" placeholder="Room code...">
 <input id="studentName" placeholder="Your name...">
 <button onclick="joinRoom()">Join</button>
 
-<h2>Current Task:</h2>
+<h3>Current Task:</h3>
 <div id="task">Waiting...</div>
 
 <textarea id="answerInput" placeholder="Write answer..."></textarea>
 <button onclick="submitAnswer()">Submit</button>
-<div id="rankDisplay" style="margin-top:15px; font-size:18px; color:#00ff9d;"></div>
+
+<div id="rankDisplay" style="margin-top:20px;font-size:18px;"></div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543"
+const firebaseConfig={
+  apiKey:"ТВОЙ_API_KEY",
+  authDomain:"black-cat-room.firebaseapp.com",
+  databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"black-cat-room",
+  storageBucket:"black-cat-room.firebasestorage.app",
+  messagingSenderId:"80028312826",
+  appId:"1:80028312826:web:ee918db88c71a0c1335543"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-let currentRoom = "";
+let currentRoom="";
 
-// ===== JOIN ROOM =====
-window.joinRoom = function() {
-  const room = document.getElementById("roomCode").value;
-  const name = document.getElementById("studentName").value;
+// ===== JOIN =====
+window.joinRoom=function(){
+  const room=document.getElementById("roomCode").value;
+  const name=document.getElementById("studentName").value;
+  if(!room||!name) return alert("Enter room and name");
 
-  if(!room || !name) return alert("Enter room and name");
+  currentRoom=room;
 
-  currentRoom = room;
-
-  // подписка на задание
-  const taskRef = ref(db, "rooms/" + room + "/task");
-
-  onValue(taskRef, (snapshot) => {
-    const data = snapshot.val();
-    document.getElementById("task").innerText = data || "Waiting...";
+  onValue(ref(db,"rooms/"+room+"/task"),snapshot=>{
+    document.getElementById("task").innerText =
+      snapshot.val() || "Waiting...";
   });
 
-  // подписка на очки
-  const scoreRef = ref(db, "rooms/" + room + "/scores/" + name);
+  onValue(ref(db,"rooms/"+room+"/scores/"+name),snapshot=>{
+    const points=snapshot.val();
+    if(points==null) return;
 
-  onValue(scoreRef, (snapshot) => {
-    const points = snapshot.val();
-    if(points == null) return;
+    let avatar="🐾";
+    let level="Новичок";
 
-    let rank = "🐾 Новичок";
-    if (points >= 5) rank = "🐱 Котёнок";
-    if (points >= 10) rank = "😼 Охотник";
-    if (points >= 20) rank = "👑 Чёрный Лорд";
+    if(points>=2){avatar="🐱";level="Котёнок";}
+    if(points>=5){avatar="😼";level="Охотник";}
+    if(points>=8){avatar="🖤🐱";level="Тёмный Кот";}
+    if(points>=10){avatar="👑🐱";level="Чёрный Лорд";}
 
-    document.getElementById("rankDisplay").innerText =
-      "Очки: " + points + " | Ранг: " + rank;
+    const block=document.getElementById("rankDisplay");
+    block.innerHTML=`
+      <div style="font-size:28px">${avatar}</div>
+      Очки: ${points} / 10<br>
+      Уровень: ${level}
+    `;
+
+    block.classList.add("rank-animate");
+    setTimeout(()=>block.classList.remove("rank-animate"),1000);
   });
 };
 
-// ===== SEND ANSWER =====
-window.submitAnswer = function() {
-  const name = document.getElementById("studentName").value;
-  const answer = document.getElementById("answerInput").value;
+// ===== SUBMIT =====
+window.submitAnswer=function(){
+  const name=document.getElementById("studentName").value;
+  const answer=document.getElementById("answerInput").value;
 
-  if(!currentRoom || !name || !answer)
-    return alert("Join room and fill all fields");
+  if(!currentRoom||!name||!answer)
+    return alert("Fill all fields");
 
-  set(ref(db, "rooms/" + currentRoom + "/answers/" + name), answer);
-
+  set(ref(db,"rooms/"+currentRoom+"/answers/"+name),answer);
   alert("Answer sent");
 };
 </script>
