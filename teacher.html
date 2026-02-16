@@ -74,6 +74,15 @@ button:hover {
 
 <div class="teacher-panel">
 <h2>Teacher Panel</h2>
+<input type="text" id="roomCode" placeholder="Enter room code..." style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#111;
+color:#00ff9d;
+border:1px solid #00ff9d;
+border-radius:8px;
+">
 
 <textarea id="taskInput" placeholder="Write your task here..."></textarea>
 <button onclick="addTask()">Add Task</button>
@@ -103,10 +112,15 @@ const db = getDatabase(app);
 
 window.addTask = function () {
   const text = document.getElementById("taskInput").value;
-  if (text.trim() === "") return;
+  const room = document.getElementById("roomCode").value;
 
-  // Сохраняем в Firebase
-  set(ref(db, "currentTask"), text);
+  if (text.trim() === "" || room.trim() === "") return;
+
+  set(ref(db, "rooms/" + room + "/currentTask"), text);
+
+  document.getElementById("taskInput").value = "";
+};
+
 
   // Добавляем карточку визуально
   const taskDiv = document.createElement("div");
