@@ -99,6 +99,31 @@ function addTask() {
 }
 </script>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  authDomain: "black-cat-room.firebaseapp.com",
+  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "black-cat-room",
+  storageBucket: "black-cat-room.firebasestorage.app",
+  messagingSenderId: "80028312826",
+  appId: "1:80028312826:web:ee918db88c71a0c1335543",
+  measurementId: "G-9W8RSBP8WQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Отправка задания
+window.addTask = function () {
+  const text = document.getElementById("taskInput").value;
+  set(ref(db, "currentTask"), text);
+};
+</script>
+
 
 </body>
 </html>
