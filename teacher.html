@@ -1,16 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Black Cat Room — Teacher</title>
+
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
+  color:#00ff9d;
+}
+.container { width:90%; margin:auto; margin-top:30px; }
+.panel {
+  background:#1c1c1c;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 0 15px rgba(0,255,150,0.2);
+}
+input, textarea {
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  background:#111;
+  color:#00ff9d;
+  border:1px solid #00ff9d;
+  border-radius:8px;
+}
+button {
+  padding:8px 15px;
+  background:#00ff9d;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+  margin:3px;
+}
+button:hover { background:#00cc7a; }
+.answer-card {
+  background:#1a1a1a;
+  padding:10px;
+  margin-top:10px;
+  border-left:4px solid #00ff9d;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="panel">
+
+<h2>🐾 Black Cat Room — Teacher</h2>
+
+<input id="roomCode" placeholder="Room code...">
+<textarea id="taskInput" placeholder="Write task here..."></textarea>
+
+<button onclick="sendTask()">Send Task</button>
+<button onclick="clearAnswers()">Clear Answers</button>
+<button onclick="closeRoom()">Close Room</button>
+
+<h3>Student Answers:</h3>
+<div id="answersContainer"></div>
+
+<h3>🏆 Leaderboard:</h3>
+<div id="leaderboardContainer"></div>
+
+</div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getDatabase, 
-  ref, 
-  onValue, 
-  set, 
-  get,
-  remove
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, get, remove } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  apiKey: "ТВОЙ_API_KEY",
   authDomain: "black-cat-room.firebaseapp.com",
   databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "black-cat-room",
@@ -24,125 +89,98 @@ const db = getDatabase(app);
 
 let currentRoom = "";
 
-/* ================================
-   🚀 SEND TASK
-================================ */
+// ===== SEND TASK =====
+window.sendTask = function() {
+  const room = document.getElementById("roomCode").value;
+  const task = document.getElementById("taskInput").value;
 
-window.sendTask = function () {
-  const roomCode = document.getElementById("roomCode").value;
-  const taskText = document.getElementById("taskInput").value;
+  if(!room || !task) return alert("Enter room and task");
 
-  if (!roomCode || !taskText) 
-    return alert("Введите код и задание");
+  currentRoom = room;
 
-  currentRoom = roomCode;
+  set(ref(db,"rooms/"+room+"/task"),task);
 
-  set(ref(db, "rooms/" + roomCode + "/task"), taskText);
-
-  loadAnswers(roomCode);
-  loadLeaderboard(roomCode);
-
-  alert("Task sent to room " + roomCode);
-};
-
-/* ================================
-   🔄 AUTO LOAD ANSWERS
-================================ */
-
-function loadAnswers(roomCode) {
-  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
-
-  onValue(answersRef, (snapshot) => {
+  // Answers listener
+  onValue(ref(db,"rooms/"+room+"/answers"),snapshot=>{
     const answers = snapshot.val();
     const container = document.getElementById("answersContainer");
-    container.innerHTML = "";
+    container.innerHTML="";
 
-    if (!answers) return;
+    if(!answers) return;
 
-    for (let name in answers) {
+    for(let name in answers){
       const div = document.createElement("div");
-      div.className = "answer-card";
+      div.className="answer-card";
 
       div.innerHTML = `
-        <b>${name}</b>: ${answers[name]}
-        <br><br>
-        <button onclick="giveScore('${name}', 0.5)">0.5</button>
-        <button onclick="giveScore('${name}', 1)">1</button>
-        <button onclick="giveScore('${name}', 1.5)">1.5</button>
-        <button onclick="giveScore('${name}', 2)">2</button>
-        <button onclick="giveScore('${name}', 2.5)">2.5</button>
-        <button onclick="giveScore('${name}', 3)">3</button>
+        <b>${name}</b>: ${answers[name]}<br><br>
+        <button onclick="giveScore('${name}',0.5)">0.5</button>
+        <button onclick="giveScore('${name}',1)">1</button>
+        <button onclick="giveScore('${name}',1.5)">1.5</button>
+        <button onclick="giveScore('${name}',2)">2</button>
+        <button onclick="giveScore('${name}',2.5)">2.5</button>
+        <button onclick="giveScore('${name}',3)">3</button>
       `;
 
       container.appendChild(div);
     }
   });
-}
 
-/* ================================
-   🏆 LEADERBOARD
-================================ */
-
-function loadLeaderboard(roomCode) {
-  const scoresRef = ref(db, "rooms/" + roomCode + "/scores");
-
-  onValue(scoresRef, (snapshot) => {
+  // Leaderboard listener
+  onValue(ref(db,"rooms/"+room+"/scores"),snapshot=>{
     const scores = snapshot.val();
     const board = document.getElementById("leaderboardContainer");
-    board.innerHTML = "";
+    board.innerHTML="";
 
-    if (!scores) return;
+    if(!scores) return;
 
     const sorted = Object.entries(scores)
-      .sort((a,b) => b[1] - a[1]);
+      .sort((a,b)=>b[1]-a[1]);
 
-    sorted.forEach(([name, points], index) => {
+    sorted.forEach(([name,points],index)=>{
       const medal =
-        index === 0 ? "🥇" :
-        index === 1 ? "🥈" :
-        index === 2 ? "🥉" : "🐾";
+        index===0?"🥇":
+        index===1?"🥈":
+        index===2?"🥉":"🐾";
 
-      board.innerHTML += `
-        ${medal} ${name} — ${points} pts<br>
-      `;
+      board.innerHTML += `${medal} ${name} — ${points} / 10<br>`;
     });
   });
-}
-
-/* ================================
-   🎮 GIVE SCORE
-================================ */
-
-window.giveScore = async function(studentName, value) {
-  if (!currentRoom) return alert("Нет активной комнаты");
-
-  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
-
-  const snapshot = await get(scoreRef);
-  let currentScore = snapshot.exists() ? snapshot.val() : 0;
-
-  await set(scoreRef, parseFloat(currentScore) + parseFloat(value));
 };
 
-/* ================================
-   🧹 CLEAR ANSWERS
-================================ */
+// ===== GIVE SCORE =====
+window.giveScore = async function(name,value){
+  if(!currentRoom) return alert("Send task first");
 
-window.clearAnswers = function () {
-  if (!currentRoom) return alert("Нет активной комнаты");
-  remove(ref(db, "rooms/" + currentRoom + "/answers"));
+  const scoreRef = ref(db,"rooms/"+currentRoom+"/scores/"+name);
+  const snap = await get(scoreRef);
+  let current = snap.exists()?parseFloat(snap.val()):0;
+
+  if(current>=10){
+    alert("Max 10 reached");
+    return;
+  }
+
+  let newScore = current + parseFloat(value);
+  if(newScore>10) newScore=10;
+
+  await set(scoreRef,newScore);
 };
 
-/* ================================
-   🚪 CLOSE ROOM
-================================ */
+// ===== CLEAR =====
+window.clearAnswers=function(){
+  if(!currentRoom) return;
+  remove(ref(db,"rooms/"+currentRoom+"/answers"));
+};
 
-window.closeRoom = function () {
-  if (!currentRoom) return alert("Нет активной комнаты");
-
-  remove(ref(db, "rooms/" + currentRoom));
-  document.getElementById("answersContainer").innerHTML = "";
-  document.getElementById("leaderboardContainer").innerHTML = "";
+// ===== CLOSE ROOM =====
+window.closeRoom=function(){
+  if(!currentRoom) return;
+  remove(ref(db,"rooms/"+currentRoom));
+  document.getElementById("answersContainer").innerHTML="";
+  document.getElementById("leaderboardContainer").innerHTML="";
 };
 
 </script>
+</body>
+</html>
