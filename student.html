@@ -11,10 +11,8 @@ body {
     background: url("123.png") no-repeat center center fixed;
     background-size: cover;
     color:#00ff9d;
-    position: relative;
 }
 
-/* затемнение для читаемости */
 body::before {
     content:"";
     position:fixed;
@@ -57,7 +55,7 @@ button:hover {
 }
 
 #catImage {
-    width:200px;
+    width:220px;
     border-radius:20px;
     margin:20px 0;
     transition:0.5s;
@@ -69,7 +67,7 @@ button:hover {
 
 @keyframes glow {
     0% { transform:scale(1); filter:brightness(1); }
-    50% { transform:scale(1.1); filter:brightness(1.8); }
+    50% { transform:scale(1.15); filter:brightness(2); }
     100% { transform:scale(1); filter:brightness(1); }
 }
 </style>
@@ -81,7 +79,6 @@ button:hover {
 
 <h1>🐾 Black Cat Room – Student</h1>
 
-<!-- 🐱 АВАТАР КОТА -->
 <img id="catImage" src="cat-level1.jpg.jpg">
 
 <input id="roomCode" placeholder="Room code...">
@@ -95,10 +92,9 @@ button:hover {
 <button onclick="submitAnswer()">Submit</button>
 
 <div id="rankDisplay" style="margin-top:20px; font-size:20px;"></div>
+
 <h3>🏆 Общий рейтинг:</h3>
 <div id="studentLeaderboard"></div>
-<div id="backgroundLeaderboard" 
-     style="margin-top:20px; opacity:0.8;"></div>
 
 </div>
 
@@ -123,81 +119,72 @@ let currentRoom = "";
 let currentLevel = 1;
 
 // ===== JOIN ROOM =====
-// ===== JOIN ROOM =====
 window.joinRoom = function() {
 
   const room = document.getElementById("roomCode").value;
   const name = document.getElementById("studentName").value;
 
-  if (!room || !name) 
+  if (!room || !name)
     return alert("Enter room and name");
 
   currentRoom = room;
 
-  // ===== Подписка на задание =====
-  const taskRef = ref(db, "rooms/" + room + "/task");
-
-  onValue(taskRef, (snapshot) => {
+  // Задание
+  onValue(ref(db, "rooms/" + room + "/task"), (snapshot) => {
     document.getElementById("task").innerText =
       snapshot.val() || "Waiting...";
   });
 
-  // ===== Подписка на очки =====
-  const scoreRef = ref(db, "rooms/" + room + "/scores/" + name);
-
-  onValue(scoreRef, (snapshot) => {
+  // Очки
+  onValue(ref(db, "rooms/" + room + "/scores/" + name), (snapshot) => {
 
     const points = snapshot.val() || 0;
 
-    // прогресс до 10
-    let progress = Math.min(points, 10);
+    let level = 1;
+    let levelText = "Новичок";
 
-    // уровень
-    let level = "Новичок";
-    if (points >= 3) level = "Котёнок";
-    if (points >= 6) level = "Охотник";
-    if (points >= 10) level = "Чёрный Лорд";
+    if (points >= 3) { level = 2; levelText = "Котёнок"; }
+    if (points >= 6) { level = 3; levelText = "Охотник"; }
+    if (points >= 10) { level = 4; levelText = "Чёрный Лорд"; }
 
-    document.getElementById("rankDisplay").innerHTML = `
-      🐱 Очки: ${points} / 10<br>
-      🎖 Уровень: ${level}
-    `;
+    document.getElementById("rankDisplay").innerHTML =
+      `🐱 Очки: ${points} / 10<br>🎖 Уровень: ${levelText}`;
+
+    // смена картинки
+    const img = document.getElementById("catImage");
+    img.src = "cat-level" + level + ".jpg.jpg";
+
+    if (level > currentLevel) {
+      img.classList.add("level-up");
+      setTimeout(() => img.classList.remove("level-up"), 600);
+    }
+
+    currentLevel = level;
   });
 
-  // ===== Подписка на leaderboard (фон-таблица) =====
-  const scoresRef = ref(db, "rooms/" + room + "/scores");
-
-  onValue(scoresRef, (snapshot) => {
+  // Лидерборд
+  onValue(ref(db, "rooms/" + room + "/scores"), (snapshot) => {
     const scores = snapshot.val();
-    const board = document.getElementById("backgroundLeaderboard");
+    const board = document.getElementById("studentLeaderboard");
 
     if (!scores) return;
 
     const sorted = Object.entries(scores)
       .sort((a,b) => b[1] - a[1]);
 
-    board.innerHTML = "<h3>🏆 Лидеры</h3>";
+    board.innerHTML = "";
 
-    sorted.slice(0,5).forEach(([name, pts]) => {
-      board.innerHTML += `${name} — ${pts} pts<br>`;
+    sorted.forEach(([name, pts], index) => {
+      const medal =
+        index === 0 ? "🥇" :
+        index === 1 ? "🥈" :
+        index === 2 ? "🥉" : "🐾";
+
+      board.innerHTML += `${medal} ${name} — ${pts} pts<br>`;
     });
   });
 
 };
-
-
-  // ✨ Анимация при повышении
-  if(newLevel > currentLevel) {
-    const img = document.getElementById("catImage");
-    img.classList.add("level-up");
-    setTimeout(() => {
-      img.classList.remove("level-up");
-    }, 600);
-  }
-
-  currentLevel = newLevel;
-  document.getElementById("catImage").src = catImg;
-}
 
 // ===== ОТПРАВКА ОТВЕТА =====
 window.submitAnswer = function() {
@@ -208,10 +195,11 @@ window.submitAnswer = function() {
     return alert("Join room and fill all fields");
 
   set(ref(db, "rooms/" + currentRoom + "/answers/" + name), answer);
-
   alert("Answer sent");
 };
+
 </script>
 
 </body>
 </html>
+
