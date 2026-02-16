@@ -1,94 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Black Cat Room — Teacher</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f0f0f, #141414, #1a1f1c);
-    color: #e0ffe8;
-}
-
-header {
-    padding: 20px;
-    font-size: 32px;
-    font-weight: bold;
-    color: #00ff9d;
-}
-
-.container {
-    width: 90%;
-    margin: auto;
-}
-
-.panel {
-    background: #1c1c1c;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 30px;
-    box-shadow: 0 0 15px rgba(0,255,150,0.2);
-}
-
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #111;
-    color: #00ff9d;
-    border: 1px solid #00ff9d;
-    border-radius: 8px;
-}
-
-button {
-    padding: 10px 20px;
-    background: #00ff9d;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-button:hover {
-    background: #00cc7a;
-}
-
-.answer-card {
-    background: #1a1a1a;
-    padding: 10px;
-    margin-top: 10px;
-    border-left: 4px solid #00ff9d;
-    border-radius: 8px;
-}
-</style>
-</head>
-<body>
-
-<header>🐾 Black Cat Room — Teacher</header>
-
-<div class="container">
-
-<div class="panel">
-<h2>Create Task</h2>
-
-<input type="text" id="roomCode" placeholder="Room code..." />
-<textarea id="taskInput" placeholder="Write task here..."></textarea>
-
-<button onclick="sendTask()">Send Task</button>
-<button onclick="clearAnswers()">Clear Answers</button>
-<button onclick="closeRoom()">Close Room</button>
-
-<h3>Student Answers:</h3>
-<div id="answersContainer"></div>
-<h3>🏆 Leaderboard:</h3>
-<div id="leaderboardContainer"></div>
-
-</div>
-</div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
@@ -115,7 +24,10 @@ const db = getDatabase(app);
 
 let currentRoom = "";
 
-// 🔥 Отправка задания
+/* ================================
+   🚀 SEND TASK
+================================ */
+
 window.sendTask = function () {
   const roomCode = document.getElementById("roomCode").value;
   const taskText = document.getElementById("taskInput").value;
@@ -127,40 +39,51 @@ window.sendTask = function () {
 
   set(ref(db, "rooms/" + roomCode + "/task"), taskText);
 
- // Авто-обновление ответов
-const answersRef = ref(db, "rooms/" + roomCode + "/answers");
+  loadAnswers(roomCode);
+  loadLeaderboard(roomCode);
 
-onValue(answersRef, (snapshot) => {
-  const answers = snapshot.val();
-  const container = document.getElementById("answersContainer");
-  container.innerHTML = "";
+  alert("Task sent to room " + roomCode);
+};
 
-  if (!answers) return;
+/* ================================
+   🔄 AUTO LOAD ANSWERS
+================================ */
 
-  for (let name in answers) {
-    const div = document.createElement("div");
-    div.className = "answer-card";
+function loadAnswers(roomCode) {
+  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
 
-    div.innerHTML = `
-      <b>${name}</b>: ${answers[name]}
-      <br><br>
-      <button onclick="giveScore('${name}', 0.5)">0.5</button>
-      <button onclick="giveScore('${name}', 1)">1</button>
-      <button onclick="giveScore('${name}', 1.5)">1.5</button>
-      <button onclick="giveScore('${name}', 2)">2</button>
-      <button onclick="giveScore('${name}', 2.5)">2.5</button>
-      <button onclick="giveScore('${name}', 3)">3</button>
-    `;
+  onValue(answersRef, (snapshot) => {
+    const answers = snapshot.val();
+    const container = document.getElementById("answersContainer");
+    container.innerHTML = "";
 
-    container.appendChild(div);
-  }
-});
+    if (!answers) return;
 
+    for (let name in answers) {
+      const div = document.createElement("div");
+      div.className = "answer-card";
+
+      div.innerHTML = `
+        <b>${name}</b>: ${answers[name]}
+        <br><br>
+        <button onclick="giveScore('${name}', 0.5)">0.5</button>
+        <button onclick="giveScore('${name}', 1)">1</button>
+        <button onclick="giveScore('${name}', 1.5)">1.5</button>
+        <button onclick="giveScore('${name}', 2)">2</button>
+        <button onclick="giveScore('${name}', 2.5)">2.5</button>
+        <button onclick="giveScore('${name}', 3)">3</button>
+      `;
+
+      container.appendChild(div);
+    }
+  });
 }
 
-  });
+/* ================================
+   🏆 LEADERBOARD
+================================ */
 
-  // 🔥 Авто-обновление leaderboard
+function loadLeaderboard(roomCode) {
   const scoresRef = ref(db, "rooms/" + roomCode + "/scores");
 
   onValue(scoresRef, (snapshot) => {
@@ -184,44 +107,42 @@ onValue(answersRef, (snapshot) => {
       `;
     });
   });
+}
 
-  alert("Task sent to room " + roomCode);
-};
+/* ================================
+   🎮 GIVE SCORE
+================================ */
 
-// 🎮 Начисление очков
 window.giveScore = async function(studentName, value) {
-  const roomCode = document.getElementById("roomCode").value;
-  if (!roomCode) return alert("Enter room code");
+  if (!currentRoom) return alert("Нет активной комнаты");
 
-  const scoreRef = ref(db, "rooms/" + roomCode + "/scores/" + studentName);
+  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
 
   const snapshot = await get(scoreRef);
   let currentScore = snapshot.exists() ? snapshot.val() : 0;
 
   await set(scoreRef, parseFloat(currentScore) + parseFloat(value));
-
-  alert("Added " + value + " points to " + studentName);
 };
 
+/* ================================
+   🧹 CLEAR ANSWERS
+================================ */
 
-// 🧹 Очистка ответов
 window.clearAnswers = function () {
   if (!currentRoom) return alert("Нет активной комнаты");
   remove(ref(db, "rooms/" + currentRoom + "/answers"));
 };
 
-// 🚪 Закрыть комнату
+/* ================================
+   🚪 CLOSE ROOM
+================================ */
+
 window.closeRoom = function () {
   if (!currentRoom) return alert("Нет активной комнаты");
 
   remove(ref(db, "rooms/" + currentRoom));
   document.getElementById("answersContainer").innerHTML = "";
   document.getElementById("leaderboardContainer").innerHTML = "";
-
-  alert("Room closed");
 };
+
 </script>
-
-
-</body>
-</html>
