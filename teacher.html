@@ -28,7 +28,7 @@ header {
     background: #1c1c1c;
     padding: 20px;
     border-radius: 12px;
-    margin-top: 30px;
+    margin-bottom: 30px;
     box-shadow: 0 0 15px rgba(0,255,150,0.2);
 }
 
@@ -59,29 +59,44 @@ button {
 button:hover {
     background: #00cc7a;
 }
+
+.answer-card {
+    background: #1a1a1a;
+    padding: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #00ff9d;
+    border-radius: 8px;
+}
 </style>
 </head>
-
 <body>
 
-<header>🐾 Black Cat Room – Teacher</header>
+<header>🐾 Black Cat Room — Teacher</header>
 
 <div class="container">
+
 <div class="panel">
+<h2>Create Task</h2>
 
-<input type="text" id="roomCode" placeholder="Enter room code (example: 7777)">
+<input type="text" id="roomCode" placeholder="Room code..." />
 <textarea id="taskInput" placeholder="Write task here..."></textarea>
-<button onclick="addTask()">Send Task</button>
 
+<button onclick="sendTask()">Send Task</button>
 </div>
+
+<div class="panel">
+<h2>Student Answers</h2>
+<div id="answers"></div>
+</div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "1234Ф",
+  apiKey: "ТВОЙ_НАСТОЯЩИЙ_API_KEY",
   authDomain: "black-cat-room.firebaseapp.com",
   databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "black-cat-room",
@@ -93,17 +108,41 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-window.addTask = function () {
-  const room = document.getElementById("roomCode").value.trim();
-  const task = document.getElementById("taskInput").value.trim();
+let currentRoom = "";
 
-  if (!room || !task) {
-    alert("Enter room code and task");
-    return;
-  }
+window.sendTask = function () {
+    const roomCode = document.getElementById("roomCode").value;
+    const text = document.getElementById("taskInput").value;
 
-  set(ref(db, "rooms/" + room + "/task"), task);
-  alert("Task sent to room " + room);
+    if (!roomCode || !text) {
+        alert("Enter room code and task");
+        return;
+    }
+
+    currentRoom = roomCode;
+
+    // Отправляем задание
+    set(ref(db, "rooms/" + roomCode + "/task"), text);
+
+    // Слушаем ответы
+    const answersRef = ref(db, "rooms/" + roomCode + "/answers");
+
+    onValue(answersRef, (snapshot) => {
+        const data = snapshot.val();
+        const answersDiv = document.getElementById("answers");
+        answersDiv.innerHTML = "";
+
+        if (data) {
+            for (let student in data) {
+                const div = document.createElement("div");
+                div.className = "answer-card";
+                div.innerHTML = "<b>" + student + ":</b><br>" + data[student];
+                answersDiv.appendChild(div);
+            }
+        }
+    });
+
+    alert("Task sent!");
 };
 </script>
 
