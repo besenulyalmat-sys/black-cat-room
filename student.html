@@ -71,14 +71,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-// авто-обновление очков
-onValue(ref(db, "rooms/" + currentRoom + "/scores"), (snapshot) => {
-  const scores = snapshot.val();
-  if (!scores) return;
 
-  const myName = document.getElementById("studentName").value;
-  if (scores[myName]) {
-    const points = scores[myName];
+let currentRoom = "";
+
+// ===== JOIN ROOM =====
+window.joinRoom = function() {
+  const room = document.getElementById("roomCode").value;
+  const name = document.getElementById("studentName").value;
+
+  if(!room || !name) return alert("Enter room and name");
+
+  currentRoom = room;
+
+  // подписка на задание
+  const taskRef = ref(db, "rooms/" + room + "/task");
+
+  onValue(taskRef, (snapshot) => {
+    const data = snapshot.val();
+    document.getElementById("task").innerText = data || "Waiting...";
+  });
+
+  // подписка на очки
+  const scoreRef = ref(db, "rooms/" + room + "/scores/" + name);
+
+  onValue(scoreRef, (snapshot) => {
+    const points = snapshot.val();
+    if(points == null) return;
 
     let rank = "🐾 Новичок";
     if (points >= 5) rank = "🐱 Котёнок";
@@ -87,25 +105,10 @@ onValue(ref(db, "rooms/" + currentRoom + "/scores"), (snapshot) => {
 
     document.getElementById("rankDisplay").innerText =
       "Очки: " + points + " | Ранг: " + rank;
-  }
-});
-
-let currentRoom = "";
-
-window.joinRoom = function() {
-  const room = document.getElementById("roomCode").value;
-  if(!room) return alert("Enter room code");
-
-  currentRoom = room;
-
-  const taskRef = ref(db, "rooms/" + room + "/task");
-
-  onValue(taskRef, (snapshot) => {
-    const data = snapshot.val();
-    document.getElementById("task").innerText = data || "Waiting...";
   });
 };
 
+// ===== SEND ANSWER =====
 window.submitAnswer = function() {
   const name = document.getElementById("studentName").value;
   const answer = document.getElementById("answerInput").value;
