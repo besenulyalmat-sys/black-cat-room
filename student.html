@@ -92,14 +92,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  apiKey: "ТВОЙ_КЛЮЧ",
   authDomain: "black-cat-room.firebaseapp.com",
   databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "black-cat-room",
   storageBucket: "black-cat-room.firebasestorage.app",
   messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
+  appId: "1:80028312826:web:ee918db88c71a0c1335543"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -110,10 +109,11 @@ const taskRef = ref(db, "currentTask");
 onValue(taskRef, (snapshot) => {
   const data = snapshot.val();
   if (data) {
-    document.getElementById("taskDisplay").innerText = data;
+    document.getElementById("currentTask").innerText = data;
   }
 });
 </script>
+
 <h2>Current Task</h2>
 <div id="taskDisplay" style="font-size:20px; margin-bottom:20px;"></div>
 
