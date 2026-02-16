@@ -96,7 +96,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "ТВОЙ_НАСТОЯЩИЙ_API_KEY",
+  apiKey: "ТВОЙ_KEY",
   authDomain: "black-cat-room.firebaseapp.com",
   databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "black-cat-room",
@@ -108,42 +108,41 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentRoom = "";
+window.addTask = function () {
+  const roomCode = document.getElementById("roomCode").value;
+  const text = document.getElementById("taskInput").value;
 
-window.sendTask = function () {
-    const roomCode = document.getElementById("roomCode").value;
-    const text = document.getElementById("taskInput").value;
+  if (!roomCode || !text) return alert("Введите код комнаты и задание");
 
-    if (!roomCode || !text) {
-        alert("Enter room code and task");
-        return;
+  set(ref(db, "rooms/" + roomCode + "/task"), text);
+};
+
+/* 🔥 ВОТ ЭТО ДОБАВЬ */
+window.listenAnswers = function () {
+  const roomCode = document.getElementById("roomCode").value;
+  if (!roomCode) return alert("Введите код комнаты");
+
+  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
+
+  onValue(answersRef, (snapshot) => {
+    const data = snapshot.val();
+    const container = document.getElementById("answers");
+    container.innerHTML = "";
+
+    if (!data) {
+      container.innerHTML = "Пока нет ответов";
+      return;
     }
 
-    currentRoom = roomCode;
-
-    // Отправляем задание
-    set(ref(db, "rooms/" + roomCode + "/task"), text);
-
-    // Слушаем ответы
-    const answersRef = ref(db, "rooms/" + roomCode + "/answers");
-
-    onValue(answersRef, (snapshot) => {
-        const data = snapshot.val();
-        const answersDiv = document.getElementById("answers");
-        answersDiv.innerHTML = "";
-
-        if (data) {
-            for (let student in data) {
-                const div = document.createElement("div");
-                div.className = "answer-card";
-                div.innerHTML = "<b>" + student + ":</b><br>" + data[student];
-                answersDiv.appendChild(div);
-            }
-        }
+    Object.keys(data).forEach((student) => {
+      const div = document.createElement("div");
+      div.className = "task-card";
+      div.innerHTML = "<b>" + student + ":</b><br>" + data[student];
+      container.appendChild(div);
     });
-
-    alert("Task sent!");
+  });
 };
+
 </script>
 
 </body>
