@@ -91,7 +91,8 @@ button:hover {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } 
+import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -151,32 +152,38 @@ window.closeRoom = function () {
   document.getElementById("answersContainer").innerHTML = "";
   alert("Room closed");
 };
-onValue(ref(db, "rooms/" + currentRoom + "/scores"), (snapshot) => {
-  const scores = snapshot.val();
-  const container = document.getElementById("leaderboardContainer");
-
-  if (!container) return;
+onValue(ref(db, "rooms/" + room + "/answers"), (snapshot) => {
+  const answers = snapshot.val();
+  const container = document.getElementById("answersContainer");
   container.innerHTML = "";
 
-  if (!scores) return;
+  if (!answers) return;
 
-  const sorted = Object.entries(scores)
-    .sort((a, b) => b[1] - a[1]);
-
-  sorted.forEach(([name, points], index) => {
+  for (let name in answers) {
     const div = document.createElement("div");
-    div.innerHTML = `#${index+1} ${name} — ${points} pts`;
+    div.innerHTML = `
+      <b>${name}</b>: ${answers[name]}
+      <button onclick="givePoint('${name}')">+1 🐾</button>
+    `;
+    div.style.marginBottom = "10px";
     container.appendChild(div);
-  });
+  }
 });
-window.givePoint = function(studentName) {
-  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
 
-  onValue(scoreRef, (snapshot) => {
-    const currentScore = snapshot.val() || 0;
-    set(scoreRef, currentScore + 1);
-  }, { onlyOnce: true });
+window.givePoint = async function(studentName) {
+  const roomCode = document.getElementById("roomCode").value;
+  if (!roomCode) return alert("Enter room code");
+
+  const scoreRef = ref(db, "rooms/" + roomCode + "/scores/" + studentName);
+
+  const snapshot = await get(scoreRef);
+  let currentScore = snapshot.exists() ? snapshot.val() : 0;
+
+  await set(scoreRef, currentScore + 1);
+
+  alert("Point added to " + studentName);
 };
+
 
 </script>
 
