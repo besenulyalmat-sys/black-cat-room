@@ -83,6 +83,8 @@ button:hover {
 
 <h3>Student Answers:</h3>
 <div id="answersContainer"></div>
+<h3>🏆 Leaderboard:</h3>
+<div id="leaderboardContainer"></div>
 
 </div>
 </div>
@@ -149,6 +151,33 @@ window.closeRoom = function () {
   document.getElementById("answersContainer").innerHTML = "";
   alert("Room closed");
 };
+onValue(ref(db, "rooms/" + currentRoom + "/scores"), (snapshot) => {
+  const scores = snapshot.val();
+  const container = document.getElementById("leaderboardContainer");
+
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!scores) return;
+
+  const sorted = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1]);
+
+  sorted.forEach(([name, points], index) => {
+    const div = document.createElement("div");
+    div.innerHTML = `#${index+1} ${name} — ${points} pts`;
+    container.appendChild(div);
+  });
+});
+window.givePoint = function(studentName) {
+  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
+
+  onValue(scoreRef, (snapshot) => {
+    const currentScore = snapshot.val() || 0;
+    set(scoreRef, currentScore + 1);
+  }, { onlyOnce: true });
+};
+
 </script>
 
 </body>
