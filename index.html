@@ -1,153 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Black Cat Room</title>
-  <style>
-    body { font-family: Arial; background: #111; color: white; padding: 20px; }
-    button { padding: 8px 15px; margin: 5px; cursor: pointer; }
-    textarea { width: 100%; height: 200px; background: #222; color: white; border: 1px solid #444; padding: 10px; }
-    input { padding: 8px; margin: 5px 0; width: 300px; }
-    .hidden { display: none; }
-    .student { border: 1px solid #444; padding: 10px; margin: 10px 0; background:#1a1a1a; }
-    h1 { color: #00ffcc; }
-  </style>
+<meta charset="UTF-8">
+<title>Black Cat Room</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0f0f, #141414, #1a1f1c);
+    color: #e0ffe8;
+}
+
+header {
+    padding: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #00ff9d;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+}
+
+.teacher-panel {
+    background: #1c1c1c;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 15px rgba(0,255,150,0.2);
+}
+
+textarea {
+    width: 100%;
+    min-height: 120px;
+    background: #111;
+    color: #00ff9d;
+    border: 1px solid #00ff9d;
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+    font-size: 14px;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #00ff9d;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00cc7a;
+}
+
+.task-card {
+    background: #1a1a1a;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 10px;
+    border-left: 4px solid #00ff9d;
+}
+</style>
 </head>
 <body>
 
-<h1>🐈‍⬛ Black Cat Room</h1>
+<header>🐾 Black Cat Room</header>
 
-<div id="login">
-  <input id="nickname" placeholder="Your nickname"><br>
-  <input id="roomCode" placeholder="Room code"><br>
-  <button onclick="enterRoom()">Enter</button>
-  <button onclick="enterTeacher()">Teacher Login</button>
+<div class="container">
+
+<div class="teacher-panel">
+<h2>Teacher Panel</h2>
+
+<textarea id="taskInput" placeholder="Write your task here..."></textarea>
+<button onclick="addTask()">Add Task</button>
+
+<div id="tasks"></div>
 </div>
 
-<div id="studentView" class="hidden">
-  <h3 id="taskText"></h3>
-  <textarea id="codeArea" placeholder="Write your code here..."></textarea><br>
-  <button onclick="submitWork()">📩 Submit</button>
-  <h4>Teacher comment:</h4>
-  <p id="comment"></p>
 </div>
 
-<div id="teacherView" class="hidden">
-  <h3>Teacher Panel</h3>
-  <input id="taskInput" placeholder="Write task here">
-  <button onclick="updateTask()">Update Task</button>
-  <button onclick="clearRoom()">Clear Room</button>
-  <hr>
-  <div id="students"></div>
-</div>
+<script>
+function addTask() {
+    let text = document.getElementById("taskInput").value;
+    if (text.trim() === "") return;
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    let taskDiv = document.createElement("div");
+    taskDiv.className = "task-card";
+    taskDiv.innerText = text;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let currentRoom = "";
-let currentUser = "";
-
-window.enterRoom = function() {
-  currentRoom = document.getElementById("roomCode").value;
-  currentUser = document.getElementById("nickname").value;
-
-  if (!currentRoom || !currentUser) {
-    alert("Enter nickname and room code");
-    return;
-  }
-
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("studentView").classList.remove("hidden");
-
-  onSnapshot(doc(db, "rooms", currentRoom), (docSnap) => {
-    if (docSnap.exists()) {
-      document.getElementById("taskText").innerText = docSnap.data().task || "";
-    }
-  });
-
-  onSnapshot(collection(db, "rooms", currentRoom, "students"), (snapshot) => {
-    snapshot.forEach(d => {
-      if (d.id === currentUser) {
-        document.getElementById("comment").innerText = d.data().comment || "";
-      }
-    });
-  });
-}
-
-window.submitWork = async function() {
-  await setDoc(doc(db, "rooms", currentRoom, "students", currentUser), {
-    code: document.getElementById("codeArea").value,
-    comment: "",
-    status: "Submitted"
-  });
-  alert("Submitted!");
-}
-
-window.enterTeacher = function() {
-  const pass = prompt("Enter teacher password:");
-  if (pass !== "blackcat123") {
-    alert("Wrong password");
-    return;
-  }
-
-  currentRoom = prompt("Enter room code:");
-  if (!currentRoom) return;
-
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("teacherView").classList.remove("hidden");
-
-  onSnapshot(collection(db, "rooms", currentRoom, "students"), (snapshot) => {
-    let html = "";
-    snapshot.forEach(d => {
-      const data = d.data();
-      html += `
-      <div class="student">
-        <strong>${d.id}</strong><br>
-        Status: ${data.status || "Writing"}<br>
-        <pre>${data.code || ""}</pre>
-        <textarea placeholder="Write comment..."
-          onchange="updateComment('${d.id}', this.value)">${data.comment || ""}</textarea>
-      </div>`;
-    });
-    document.getElementById("students").innerHTML = html;
-  });
-}
-
-window.updateComment = async function(studentId, comment) {
-  await setDoc(doc(db, "rooms", currentRoom, "students", studentId), {
-    comment: comment
-  }, { merge: true });
-}
-
-window.updateTask = async function() {
-  await setDoc(doc(db, "rooms", currentRoom), {
-    task: document.getElementById("taskInput").value
-  }, { merge: true });
-}
-
-window.clearRoom = async function() {
-  const querySnapshot = await getDocs(collection(db, "rooms", currentRoom, "students"));
-  querySnapshot.forEach(async (docItem) => {
-    await deleteDoc(doc(db, "rooms", currentRoom, "students", docItem.id));
-  });
-  alert("Room cleared!");
+    document.getElementById("tasks").appendChild(taskDiv);
+    document.getElementById("taskInput").value = "";
 }
 </script>
 
 </body>
 </html>
-
