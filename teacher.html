@@ -88,6 +88,8 @@ function addTask() {
     let text = document.getElementById("taskInput").value;
     if (text.trim() === "") return;
 
+    localStorage.setItem("currentTask", text);
+
     let taskDiv = document.createElement("div");
     taskDiv.className = "task-card";
     taskDiv.innerText = text;
@@ -96,6 +98,7 @@ function addTask() {
     document.getElementById("taskInput").value = "";
 }
 </script>
+
 
 </body>
 </html>
