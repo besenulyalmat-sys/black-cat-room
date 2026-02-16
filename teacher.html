@@ -90,27 +90,15 @@ button:hover {
 </div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getDatabase, 
   ref, 
   onValue, 
   set, 
-  get   // ← ВАЖНО
+  get,
+  remove
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-window.givePoint = async function(studentName) {
-  const roomCode = document.getElementById("roomCode").value;
-  if (!roomCode) return alert("Enter room code");
-
-  const scoreRef = ref(db, "rooms/" + roomCode + "/scores/" + studentName);
-
-  const snapshot = await get(scoreRef);
-  let currentScore = snapshot.exists() ? snapshot.val() : 0;
-
-  await set(scoreRef, currentScore + 1);
-
-  alert("Point added to " + studentName);
-};
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
@@ -127,70 +115,98 @@ const db = getDatabase(app);
 
 let currentRoom = "";
 
+// 🔥 Отправка задания
 window.sendTask = function () {
   const roomCode = document.getElementById("roomCode").value;
   const taskText = document.getElementById("taskInput").value;
 
-  if (!roomCode || !taskText) return alert("Введите код и задание");
+  if (!roomCode || !taskText) 
+    return alert("Введите код и задание");
 
   currentRoom = roomCode;
 
   set(ref(db, "rooms/" + roomCode + "/task"), taskText);
 
-  // 🔥 Авто-обновление ответов
+  // Авто-обновление ответов
   const answersRef = ref(db, "rooms/" + roomCode + "/answers");
 
   onValue(answersRef, (snapshot) => {
-    const data = snapshot.val();
+    const answers = snapshot.val();
     const container = document.getElementById("answersContainer");
     container.innerHTML = "";
 
-    if (!data) return;
+    if (!answers) return;
 
-    Object.keys(data).forEach((student) => {
+    for (let name in answers) {
       const div = document.createElement("div");
       div.className = "answer-card";
-      div.innerHTML = "<b>" + student + ":</b><br>" + data[student];
+      div.innerHTML = `
+        <b>${name}</b>: ${answers[name]}
+        <br>
+        <button onclick="givePoint('${name}')">+1 🐾</button>
+      `;
       container.appendChild(div);
+    }
+  });
+
+  // 🔥 Авто-обновление leaderboard
+  const scoresRef = ref(db, "rooms/" + roomCode + "/scores");
+
+  onValue(scoresRef, (snapshot) => {
+    const scores = snapshot.val();
+    const board = document.getElementById("leaderboardContainer");
+    board.innerHTML = "";
+
+    if (!scores) return;
+
+    const sorted = Object.entries(scores)
+      .sort((a,b) => b[1] - a[1]);
+
+    sorted.forEach(([name, points], index) => {
+      const medal =
+        index === 0 ? "🥇" :
+        index === 1 ? "🥈" :
+        index === 2 ? "🥉" : "🐾";
+
+      board.innerHTML += `
+        ${medal} ${name} — ${points} pts<br>
+      `;
     });
   });
 
   alert("Task sent to room " + roomCode);
 };
 
+// 🎮 Начисление очков
+window.givePoint = async function(studentName) {
+  if (!currentRoom) return alert("Нет активной комнаты");
+
+  const scoreRef = ref(db, "rooms/" + currentRoom + "/scores/" + studentName);
+
+  const snapshot = await get(scoreRef);
+  const currentScore = snapshot.exists() ? snapshot.val() : 0;
+
+  await set(scoreRef, currentScore + 1);
+};
+
+// 🧹 Очистка ответов
 window.clearAnswers = function () {
-  if (!currentRoom) return alert("Сначала отправь задание");
+  if (!currentRoom) return alert("Нет активной комнаты");
   remove(ref(db, "rooms/" + currentRoom + "/answers"));
 };
 
+// 🚪 Закрыть комнату
 window.closeRoom = function () {
   if (!currentRoom) return alert("Нет активной комнаты");
+
   remove(ref(db, "rooms/" + currentRoom));
   document.getElementById("answersContainer").innerHTML = "";
+  document.getElementById("leaderboardContainer").innerHTML = "";
+
   alert("Room closed");
 };
-onValue(ref(db, "rooms/" + room + "/answers"), (snapshot) => {
-  const answers = snapshot.val();
-  const container = document.getElementById("answersContainer");
-  container.innerHTML = "";
-
-  if (!answers) return;
-
-  for (let name in answers) {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <b>${name}</b>: ${answers[name]}
-      <button onclick="givePoint('${name}')">+1 🐾</button>
-    `;
-    div.style.marginBottom = "10px";
-    container.appendChild(div);
-  }
-});
-
-
-
-
 </script>
+
 
 </body>
 </html>
