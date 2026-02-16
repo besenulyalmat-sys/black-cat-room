@@ -2,65 +2,95 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Black Cat Room – Teacher</title>
+<title>Black Cat Room — Teacher</title>
 
 <style>
 body {
-    margin:0;
-    font-family:Arial;
-    background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
-    color:#00ff9d;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0f0f, #141414, #1a1f1c);
+    color: #e0ffe8;
 }
+
+header {
+    padding: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #00ff9d;
+}
+
 .container {
-    width:90%;
-    margin:auto;
-    margin-top:30px;
+    width: 90%;
+    margin: auto;
 }
+
+.panel {
+    background: #1c1c1c;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 15px rgba(0,255,150,0.2);
+}
+
 input, textarea {
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    background:#111;
-    color:#00ff9d;
-    border:1px solid #00ff9d;
-    border-radius:8px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #111;
+    color: #00ff9d;
+    border: 1px solid #00ff9d;
+    border-radius: 8px;
 }
+
 button {
-    padding:10px 20px;
-    background:#00ff9d;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
+    padding: 10px 20px;
+    background: #00ff9d;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 10px;
 }
+
+button:hover {
+    background: #00cc7a;
+}
+
 .answer-card {
-    background:#1a1a1a;
-    padding:10px;
-    margin-top:10px;
-    border-left:4px solid #00ff9d;
+    background: #1a1a1a;
+    padding: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #00ff9d;
+    border-radius: 8px;
 }
 </style>
 </head>
-
 <body>
+
+<header>🐾 Black Cat Room — Teacher</header>
 
 <div class="container">
 
-<h1>🐾 Black Cat Room – Teacher</h1>
+<div class="panel">
+<h2>Create Task</h2>
 
-<input id="roomCode" placeholder="Room code...">
+<input type="text" id="roomCode" placeholder="Room code..." />
 <textarea id="taskInput" placeholder="Write task here..."></textarea>
+
 <button onclick="sendTask()">Send Task</button>
-<button onclick="loadAnswers()">Show Answers</button>
+<button onclick="clearAnswers()">Clear Answers</button>
+<button onclick="closeRoom()">Close Room</button>
 
-<h2>Student Answers:</h2>
-<div id="answers"></div>
+<h3>Student Answers:</h3>
+<div id="answersContainer"></div>
 
+</div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
@@ -75,39 +105,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-window.sendTask = function() {
-  const room = document.getElementById("roomCode").value;
-  const task = document.getElementById("taskInput").value;
+let currentRoom = "";
 
-  if(!room || !task) return alert("Enter room and task");
+window.sendTask = function () {
+  const roomCode = document.getElementById("roomCode").value;
+  const taskText = document.getElementById("taskInput").value;
 
-  set(ref(db, "rooms/" + room + "/task"), task);
-  alert("Task sent");
-};
+  if (!roomCode || !taskText) return alert("Введите код и задание");
 
-window.loadAnswers = function() {
-  const room = document.getElementById("roomCode").value;
-  if(!room) return alert("Enter room code");
+  currentRoom = roomCode;
 
-  const answersRef = ref(db, "rooms/" + room + "/answers");
+  set(ref(db, "rooms/" + roomCode + "/task"), taskText);
+
+  // 🔥 Авто-обновление ответов
+  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
 
   onValue(answersRef, (snapshot) => {
     const data = snapshot.val();
-    const answersDiv = document.getElementById("answers");
-    answersDiv.innerHTML = "";
+    const container = document.getElementById("answersContainer");
+    container.innerHTML = "";
 
-    if(!data) {
-        answersDiv.innerHTML = "No answers yet";
-        return;
-    }
+    if (!data) return;
 
-    Object.keys(data).forEach(name => {
-        const div = document.createElement("div");
-        div.className = "answer-card";
-        div.innerHTML = "<b>" + name + ":</b><br>" + data[name];
-        answersDiv.appendChild(div);
+    Object.keys(data).forEach((student) => {
+      const div = document.createElement("div");
+      div.className = "answer-card";
+      div.innerHTML = "<b>" + student + ":</b><br>" + data[student];
+      container.appendChild(div);
     });
   });
+
+  alert("Task sent to room " + roomCode);
+};
+
+window.clearAnswers = function () {
+  if (!currentRoom) return alert("Сначала отправь задание");
+  remove(ref(db, "rooms/" + currentRoom + "/answers"));
+};
+
+window.closeRoom = function () {
+  if (!currentRoom) return alert("Нет активной комнаты");
+  remove(ref(db, "rooms/" + currentRoom));
+  document.getElementById("answersContainer").innerHTML = "";
+  alert("Room closed");
 };
 </script>
 
