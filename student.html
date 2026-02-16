@@ -5,141 +5,184 @@
 <title>Black Cat Room – Student</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
-  color:#00ff9d;
-}
-.container{width:90%;margin:auto;margin-top:30px;}
-input,textarea{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  background:#111;
-  color:#00ff9d;
-  border:1px solid #00ff9d;
-  border-radius:8px;
-}
-button{
-  padding:8px 15px;
-  background:#00ff9d;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
+body {
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
+    color:#00ff9d;
+    text-align:center;
 }
 
-@keyframes glow{
-  0%{text-shadow:0 0 5px #00ff9d;}
-  50%{text-shadow:0 0 20px #00ff9d;}
-  100%{text-shadow:0 0 5px #00ff9d;}
+.container {
+    width:90%;
+    margin:auto;
+    margin-top:30px;
 }
-.rank-animate{
-  animation:glow 1s ease-in-out;
+
+input, textarea {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    background:#111;
+    color:#00ff9d;
+    border:1px solid #00ff9d;
+    border-radius:8px;
+}
+
+button {
+    padding:10px 20px;
+    background:#00ff9d;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.3s;
+}
+
+button:hover {
+    background:#00cc7a;
+}
+
+#catImage {
+    width:200px;
+    border-radius:20px;
+    margin:20px 0;
+    transition:0.5s;
+}
+
+.level-up {
+    animation: glow 0.6s ease-in-out;
+}
+
+@keyframes glow {
+    0% { transform:scale(1); filter:brightness(1); }
+    50% { transform:scale(1.1); filter:brightness(1.8); }
+    100% { transform:scale(1); filter:brightness(1); }
 }
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
-<h2>🐾 Black Cat Room – Student</h2>
-<div id="catAvatar" style="text-align:center; margin:20px 0;">
-  <img id="catImage" src="cat-level1.jpg.jpg" 
-       style="width:180px; border-radius:20px; transition:0.4s;">
-</div>
+<h1>🐾 Black Cat Room – Student</h1>
+
+<!-- 🐱 АВАТАР КОТА -->
+<img id="catImage" src="cat-level1.jpg.jpg">
 
 <input id="roomCode" placeholder="Room code...">
 <input id="studentName" placeholder="Your name...">
 <button onclick="joinRoom()">Join</button>
 
-<h3>Current Task:</h3>
+<h2>Current Task:</h2>
 <div id="task">Waiting...</div>
 
 <textarea id="answerInput" placeholder="Write answer..."></textarea>
 <button onclick="submitAnswer()">Submit</button>
 
-<div id="rankDisplay" style="margin-top:20px;font-size:18px;"></div>
+<div id="rankDisplay" style="margin-top:20px; font-size:20px;"></div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig={
-  apiKey:"AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain:"black-cat-room.firebaseapp.com",
-  databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"black-cat-room",
-  storageBucket:"black-cat-room.firebasestorage.app",
-  messagingSenderId:"80028312826",
-  appId:"1:80028312826:web:ee918db88c71a0c1335543"
+const firebaseConfig = {
+  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  authDomain: "black-cat-room.firebaseapp.com",
+  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "black-cat-room",
+  storageBucket: "black-cat-room.firebasestorage.app",
+  messagingSenderId: "80028312826",
+  appId: "1:80028312826:web:ee918db88c71a0c1335543"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-let currentRoom="";
+let currentRoom = "";
+let currentLevel = 1;
 
-// ===== JOIN =====
-window.joinRoom=function(){
-  const room=document.getElementById("roomCode").value;
-  const name=document.getElementById("studentName").value;
-  if(!room||!name) return alert("Enter room and name");
+// ===== JOIN ROOM =====
+window.joinRoom = function() {
+  const room = document.getElementById("roomCode").value;
+  const name = document.getElementById("studentName").value;
 
-  currentRoom=room;
+  if(!room || !name) return alert("Enter room and name");
 
-  onValue(ref(db,"rooms/"+room+"/task"),snapshot=>{
+  currentRoom = room;
+
+  // подписка на задание
+  const taskRef = ref(db, "rooms/" + room + "/task");
+  onValue(taskRef, (snapshot) => {
     document.getElementById("task").innerText =
       snapshot.val() || "Waiting...";
   });
 
-onValue(scoreRef, (snapshot) => {
-  const points = snapshot.val();
-  if(points == null) return;
+  // подписка на очки
+  const scoreRef = ref(db, "rooms/" + room + "/scores/" + name);
 
-  let rank = "Новичок";
+  onValue(scoreRef, (snapshot) => {
+    const points = snapshot.val();
+    if(points == null) return;
+
+    updateLevel(points);
+  });
+};
+
+// ===== ПРОКАЧКА =====
+function updateLevel(points) {
+
+  let rank = "🐾 Новичок";
   let catImg = "cat-level1.jpg.jpg";
+  let newLevel = 1;
 
   if (points >= 3) {
     rank = "🐱 Котёнок";
     catImg = "cat-level2.jpg.jpg";
+    newLevel = 2;
   }
 
   if (points >= 7) {
     rank = "😼 Охотник";
     catImg = "cat-level3.jpg.jpg";
+    newLevel = 3;
   }
 
   if (points >= 10) {
     rank = "👑 Король Кот";
     catImg = "cat-king.jpg.jpg";
+    newLevel = 4;
   }
 
   document.getElementById("rankDisplay").innerText =
     "Очки: " + points + " / 10\nУровень: " + rank;
 
+  // ✨ Анимация при повышении
+  if(newLevel > currentLevel) {
+    const img = document.getElementById("catImage");
+    img.classList.add("level-up");
+    setTimeout(() => {
+      img.classList.remove("level-up");
+    }, 600);
+  }
+
+  currentLevel = newLevel;
   document.getElementById("catImage").src = catImg;
-});
+}
 
+// ===== ОТПРАВКА ОТВЕТА =====
+window.submitAnswer = function() {
+  const name = document.getElementById("studentName").value;
+  const answer = document.getElementById("answerInput").value;
 
-    block.classList.add("rank-animate");
-    setTimeout(()=>block.classList.remove("rank-animate"),1000);
-  });
-};
+  if(!currentRoom || !name || !answer)
+    return alert("Join room and fill all fields");
 
-// ===== SUBMIT =====
-window.submitAnswer=function(){
-  const name=document.getElementById("studentName").value;
-  const answer=document.getElementById("answerInput").value;
+  set(ref(db, "rooms/" + currentRoom + "/answers/" + name), answer);
 
-  if(!currentRoom||!name||!answer)
-    return alert("Fill all fields");
-
-  set(ref(db,"rooms/"+currentRoom+"/answers/"+name),answer);
   alert("Answer sent");
 };
 </script>
