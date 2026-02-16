@@ -45,6 +45,10 @@ button{
 <div class="container">
 
 <h2>🐾 Black Cat Room – Student</h2>
+<div id="catAvatar" style="text-align:center; margin:20px 0;">
+  <img id="catImage" src="cat-level1.jpg.jpg" 
+       style="width:180px; border-radius:20px; transition:0.4s;">
+</div>
 
 <input id="roomCode" placeholder="Room code...">
 <input id="studentName" placeholder="Your name...">
@@ -93,24 +97,34 @@ window.joinRoom=function(){
       snapshot.val() || "Waiting...";
   });
 
-  onValue(ref(db,"rooms/"+room+"/scores/"+name),snapshot=>{
-    const points=snapshot.val();
-    if(points==null) return;
+onValue(scoreRef, (snapshot) => {
+  const points = snapshot.val();
+  if(points == null) return;
 
-    let avatar="🐾";
-    let level="Новичок";
+  let rank = "Новичок";
+  let catImg = "cat-level1.jpg.jpg";
 
-    if(points>=2){avatar="🐱";level="Котёнок";}
-    if(points>=5){avatar="😼";level="Охотник";}
-    if(points>=8){avatar="🖤🐱";level="Тёмный Кот";}
-    if(points>=10){avatar="👑🐱";level="Чёрный Лорд";}
+  if (points >= 3) {
+    rank = "🐱 Котёнок";
+    catImg = "cat-level2.jpg.jpg";
+  }
 
-    const block=document.getElementById("rankDisplay");
-    block.innerHTML=`
-      <div style="font-size:28px">${avatar}</div>
-      Очки: ${points} / 10<br>
-      Уровень: ${level}
-    `;
+  if (points >= 7) {
+    rank = "😼 Охотник";
+    catImg = "cat-level3.jpg.jpg";
+  }
+
+  if (points >= 10) {
+    rank = "👑 Король Кот";
+    catImg = "cat-king.jpg.jpg";
+  }
+
+  document.getElementById("rankDisplay").innerText =
+    "Очки: " + points + " / 10\nУровень: " + rank;
+
+  document.getElementById("catImage").src = catImg;
+});
+
 
     block.classList.add("rank-animate");
     setTimeout(()=>block.classList.remove("rank-animate"),1000);
