@@ -99,7 +99,18 @@ button{
 <button onclick="joinRoom()">Join</button>
 </div>
 </div>
-
+<div id="teacherCommentBox" style="
+  margin-top:15px;
+  padding:15px;
+  background:#111;
+  border:1px solid #00ff9d;
+  border-radius:15px;
+  min-height:60px;
+">
+  <b>💬 Комментарий учителя:</b>
+  <div id="teacherCommentText">Нет комментариев</div>
+</div>
+<div id="rankDisplay"></div>
 <div class="rank-box">
 <div id="rankDisplay">Очки: 0</div>
 <h4>🏆 Top 5</h4>
@@ -146,10 +157,12 @@ window.joinRoom=function(){
 
   currentRoom=room;
 
-  onValue(ref(db,"rooms/"+room+"/task"),snap=>{
-    document.getElementById("task").innerText=
-    snap.val()||"Waiting...";
-  });
+ // 💬 Подписка на комментарий учителя
+onValue(ref(db, "rooms/"+room+"/comments/"+name),(snap)=>{
+  const text = snap.val();
+  document.getElementById("teacherCommentText").innerText =
+    text ? text : "Нет комментариев";
+});
 
   onValue(ref(db,"rooms/"+room+"/scores/"+name),snap=>{
     const points=snap.val()||0;
