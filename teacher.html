@@ -2,119 +2,141 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Black Cat Room — Teacher</title>
+<title>Black Cat Room — Teacher PRO</title>
 
 <style>
-body {
-    margin:0;
-    font-family:Arial;
-    background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
-    color:#00ff9d;
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
+  color:#00ff9d;
 }
 
-header {
-    padding:20px;
-    font-size:28px;
-    font-weight:bold;
+header{
+  padding:20px;
+  font-size:28px;
+  font-weight:bold;
 }
 
-.container {
-    width:90%;
-    margin:auto;
+.container{
+  width:95%;
+  margin:auto;
 }
 
-.panel {
-    background:#1c1c1c;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:30px;
-    box-shadow:0 0 20px rgba(0,255,150,0.2);
+input, textarea{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  background:#111;
+  color:#00ff9d;
+  border:1px solid #00ff9d;
+  border-radius:10px;
 }
 
-input, textarea {
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    background:#111;
-    color:#00ff9d;
-    border:1px solid #00ff9d;
-    border-radius:8px;
+button{
+  padding:8px 14px;
+  margin:4px 3px;
+  background:#00ff9d;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
 }
 
-button {
-    padding:8px 14px;
-    background:#00ff9d;
-    border:none;
-    border-radius:8px;
-    font-weight:bold;
-    cursor:pointer;
-    margin:4px;
-    transition:0.2s;
+button:hover{
+  background:#00cc7a;
 }
 
-button:hover {
-    background:#00cc7a;
+.teacher-layout{
+  display:flex;
+  gap:30px;
 }
 
-.answer-card {
-    background:#151515;
-    padding:10px;
-    margin-top:10px;
-    border-left:4px solid #00ff9d;
-    border-radius:8px;
+.answers-section{
+  flex:1;
 }
 
-.leaderboard-entry {
-    margin:6px 0;
+.leaderboard-section{
+  width:280px;
+  position:sticky;
+  top:20px;
+  height:fit-content;
+  background:#111;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 0 15px #00ff9d;
+}
+
+.answer-card{
+  background:#1a1a1a;
+  padding:15px;
+  margin-bottom:15px;
+  border-left:4px solid #00ff9d;
+  border-radius:10px;
+}
+
+.answer-text{
+  white-space:pre-wrap;
+  word-break:break-word;
+  background:#111;
+  padding:10px;
+  border-radius:10px;
+  margin:10px 0;
+}
+
+.score-buttons button{
+  font-size:12px;
+}
+
+textarea.comment{
+  height:70px;
+  resize:vertical;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<header>🐾 Black Cat Room — Teacher</header>
+<header>🐾 Black Cat Room — Teacher PRO</header>
 
 <div class="container">
 
-<div class="panel">
-
-<h2>Create Task</h2>
-
-<input type="text" id="roomCode" placeholder="Room code...">
-<textarea id="taskInput" placeholder="Write task here..."></textarea>
-
+<input id="roomCode" placeholder="Room code...">
+<textarea id="taskInput" placeholder="Write task..."></textarea>
 <button onclick="sendTask()">Send Task</button>
 <button onclick="clearAnswers()">Clear Answers</button>
 <button onclick="closeRoom()">Close Room</button>
 
-<h3>Student Answers:</h3>
+<div class="teacher-layout">
+
+<div class="answers-section">
+
+<input type="text" id="searchInput" placeholder="🔍 Search student...">
+
+<h3>Student Answers</h3>
 <div id="answersContainer"></div>
 
-<h3>🏆 Leaderboard:</h3>
+</div>
+
+<div class="leaderboard-section">
+<h3>🏆 Leaderboard</h3>
 <div id="leaderboardContainer"></div>
+</div>
 
 </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getDatabase, 
-  ref, 
-  onValue, 
-  set, 
-  get,
-  remove
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, get, remove } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_AUTH",
+  databaseURL: "YOUR_DB",
+  projectId: "YOUR_ID",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -122,130 +144,117 @@ const db = getDatabase(app);
 
 let currentRoom = "";
 
-// ===== ОТПРАВКА ЗАДАНИЯ =====
-window.sendTask = function() {
+// SEND TASK
+window.sendTask = function(){
+  const room = document.getElementById("roomCode").value;
+  const task = document.getElementById("taskInput").value;
+  if(!room || !task) return alert("Fill fields");
 
-  const roomCode = document.getElementById("roomCode").value;
-  const taskText = document.getElementById("taskInput").value;
+  currentRoom = room;
+  set(ref(db,"rooms/"+room+"/task"), task);
 
-  if(!roomCode || !taskText)
-    return alert("Введите код и задание");
+  const answersRef = ref(db,"rooms/"+room+"/answers");
 
-  currentRoom = roomCode;
-
-  set(ref(db, "rooms/" + roomCode + "/task"), taskText);
-
-  listenAnswers(roomCode);
-  listenLeaderboard(roomCode);
-
-  alert("Task sent to room " + roomCode);
-};
-
-// ===== СЛУШАЕМ ОТВЕТЫ =====
-function listenAnswers(roomCode) {
-
-  const answersRef = ref(db, "rooms/" + roomCode + "/answers");
-
-  onValue(answersRef, (snapshot) => {
-
+  onValue(answersRef,(snapshot)=>{
     const answers = snapshot.val();
     const container = document.getElementById("answersContainer");
-    container.innerHTML = "";
+    container.innerHTML="";
 
     if(!answers) return;
 
-    for(let name in answers) {
+    for(let name in answers){
 
       const div = document.createElement("div");
-      div.className = "answer-card";
+      div.className="answer-card";
+      div.setAttribute("data-name", name.toLowerCase());
 
-      div.innerHTML = `
-        <b>${name}</b>: ${answers[name]}
-        <br><br>
-        <button onclick="giveScore('${name}',0.5)">0.5</button>
-        <button onclick="giveScore('${name}',1)">1</button>
-        <button onclick="giveScore('${name}',1.5)">1.5</button>
-        <button onclick="giveScore('${name}',2)">2</button>
-        <button onclick="giveScore('${name}',2.5)">2.5</button>
-        <button onclick="giveScore('${name}',3)">3</button>
+      div.innerHTML=`
+        <b>${name}</b>
+        <div class="answer-text">${answers[name]}</div>
+
+        <textarea class="comment"
+        placeholder="Comment..."
+        onchange="saveComment('${name}',this.value)">
+        </textarea>
+
+        <div class="score-buttons">
+          <button onclick="giveScore('${name}',0.5)">+0.5</button>
+          <button onclick="giveScore('${name}',1)">+1</button>
+          <button onclick="giveScore('${name}',1.5)">+1.5</button>
+          <button onclick="giveScore('${name}',2)">+2</button>
+          <button onclick="giveScore('${name}',2.5)">+2.5</button>
+          <button onclick="giveScore('${name}',3)">+3</button>
+
+          <button onclick="giveScore('${name}',-0.5)">-0.5</button>
+          <button onclick="giveScore('${name}',-1)">-1</button>
+          <button onclick="giveScore('${name}',-1.5)">-1.5</button>
+          <button onclick="giveScore('${name}',-2)">-2</button>
+          <button onclick="giveScore('${name}',-2.5)">-2.5</button>
+          <button onclick="giveScore('${name}',-3)">-3</button>
+
+          <button onclick="resetScore('${name}')">Reset</button>
+        </div>
       `;
 
       container.appendChild(div);
     }
-
   });
-}
 
-// ===== НАЧИСЛЕНИЕ БАЛЛОВ =====
-window.giveScore = async function(studentName, value) {
-
-  const roomCode = document.getElementById("roomCode").value;
-  if(!roomCode) return alert("Enter room code");
-
-  const scoreRef = ref(db, "rooms/" + roomCode + "/scores/" + studentName);
-
-  const snapshot = await get(scoreRef);
-  let currentScore = snapshot.exists() ? snapshot.val() : 0;
-
-  let newScore = parseFloat(currentScore) + parseFloat(value);
-
-  if(newScore > 10) newScore = 10; // максимум 10
-
-  await set(scoreRef, newScore);
-};
-
-// ===== LEADERBOARD =====
-function listenLeaderboard(roomCode) {
-
-  const scoresRef = ref(db, "rooms/" + roomCode + "/scores");
-
-  onValue(scoresRef, (snapshot) => {
-
+  // LEADERBOARD
+  onValue(ref(db,"rooms/"+room+"/scores"),(snapshot)=>{
     const scores = snapshot.val();
     const board = document.getElementById("leaderboardContainer");
-    board.innerHTML = "";
-
+    board.innerHTML="";
     if(!scores) return;
 
     const sorted = Object.entries(scores)
-      .sort((a,b) => b[1] - a[1]);
+    .sort((a,b)=>b[1]-a[1]);
 
-    sorted.forEach(([name, points], index) => {
-
-      let medal = "🐾";
-      if(index === 0) medal = "🥇";
-      if(index === 1) medal = "🥈";
-      if(index === 2) medal = "🥉";
-
-      let level = "Новичок";
-      if(points >= 3) level = "Котёнок";
-      if(points >= 7) level = "Охотник";
-      if(points >= 10) level = "👑 Король Кот";
-
-      const div = document.createElement("div");
-      div.className = "leaderboard-entry";
-      div.innerHTML = `${medal} ${name} — ${points}/10 (${level})`;
-
-      board.appendChild(div);
+    sorted.forEach(([name,pts],i)=>{
+      const medal = i==0?"🥇":i==1?"🥈":i==2?"🥉":"🐾";
+      board.innerHTML+=`${medal} ${name} — ${pts} pts<br>`;
     });
-
   });
-}
-
-// ===== ОЧИСТКА =====
-window.clearAnswers = function() {
-  if(!currentRoom) return alert("Нет активной комнаты");
-  remove(ref(db, "rooms/" + currentRoom + "/answers"));
 };
 
-// ===== ЗАКРЫТЬ КОМНАТУ =====
-window.closeRoom = function() {
-  if(!currentRoom) return alert("Нет активной комнаты");
-  remove(ref(db, "rooms/" + currentRoom));
-  document.getElementById("answersContainer").innerHTML = "";
-  document.getElementById("leaderboardContainer").innerHTML = "";
-  alert("Room closed");
+// SCORE
+window.giveScore = async function(name,value){
+  const room=document.getElementById("roomCode").value;
+  const refScore=ref(db,"rooms/"+room+"/scores/"+name);
+  const snap=await get(refScore);
+  let current=snap.exists()?snap.val():0;
+  let newScore=parseFloat(current)+parseFloat(value);
+  if(newScore<0) newScore=0;
+  await set(refScore,newScore);
 };
+
+window.resetScore = function(name){
+  const room=document.getElementById("roomCode").value;
+  set(ref(db,"rooms/"+room+"/scores/"+name),0);
+};
+
+window.saveComment = function(name,text){
+  const room=document.getElementById("roomCode").value;
+  set(ref(db,"rooms/"+room+"/comments/"+name),text);
+};
+
+window.clearAnswers = function(){
+  remove(ref(db,"rooms/"+currentRoom+"/answers"));
+};
+
+window.closeRoom = function(){
+  remove(ref(db,"rooms/"+currentRoom));
+};
+
+// SEARCH
+document.getElementById("searchInput").addEventListener("input",function(){
+  const value=this.value.toLowerCase();
+  const cards=document.querySelectorAll(".answer-card");
+  cards.forEach(card=>{
+    const name=card.getAttribute("data-name");
+    card.style.display=name.includes(value)?"block":"none";
+  });
+});
 </script>
 
 </body>
