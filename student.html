@@ -99,13 +99,14 @@ button{
 <button onclick="joinRoom()">Join</button>
 </div>
 </div>
+<div id="timerBox" style="margin:10px 0;font-size:18px;"></div>
+
 <div id="teacherCommentBox" style="
-  margin-top:15px;
-  padding:15px;
+  margin-top:10px;
+  padding:10px;
   background:#111;
   border:1px solid #00ff9d;
-  border-radius:15px;
-  min-height:60px;
+  border-radius:10px;
 ">
   <b>💬 Комментарий учителя:</b>
   <div id="teacherCommentText">Нет комментариев</div>
@@ -129,7 +130,7 @@ button{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } 
+import { getDatabase, ref, onValue, push, set }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -157,15 +158,30 @@ window.joinRoom=function(){
 
   currentRoom=room;
 
- // 💬 Подписка на комментарий учителя
-onValue(ref(db, "rooms/"+room+"/comments/"+name),(snap)=>{
-  const text = snap.val();
+// 💬 Комментарий
+onValue(ref(db,"rooms/"+room+"/comments/"+name),(snap)=>{
   document.getElementById("teacherCommentText").innerText =
-    text ? text : "Нет комментариев";
+    snap.val() || "Нет комментариев";
 });
 
-  onValue(ref(db,"rooms/"+room+"/scores/"+name),snap=>{
-    const points=snap.val()||0;
+// ⏳ Таймер
+onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
+  const endTime=snap.val();
+  if(!endTime) return;
+
+  const interval=setInterval(()=>{
+    const diff=endTime-Date.now();
+
+    if(diff<=0){
+      clearInterval(interval);
+      document.getElementById("answerInput").disabled=true;
+      document.getElementById("timerBox").innerText="⛔ Время вышло";
+    } else {
+      document.getElementById("timerBox").innerText=
+        "⏳ Осталось: "+Math.floor(diff/1000)+" сек";
+    }
+  },1000);
+});
 
     let level=1;
     let levelText="Новичок";
@@ -205,10 +221,18 @@ onValue(ref(db, "rooms/"+room+"/comments/"+name),(snap)=>{
 };
 
 window.submitAnswer=function(){
-  const name=document.getElementById("studentName").value;
-  const answer=document.getElementById("answerInput").value;
-  if(!currentRoom||!name||!answer) return alert("Fill all");
-  set(ref(db,"rooms/"+currentRoom+"/answers/"+name),answer);
+
+  const text=document.getElementById("answerInput").value;
+  if(!text) return;
+
+  push(ref(db,"rooms/"+currentRoom+"/answers/"+currentName),{
+    text:text,
+    time:Date.now(),
+    checked:false,
+    scoreGiven:0
+  });
+
+  document.getElementById("answerInput").value="";
 };
 </script>
 
