@@ -93,6 +93,14 @@ textarea.comment{
   resize:vertical;
   margin-top:10px;
 }
+<input id="timerInput" placeholder="Время (секунды)">
+<button onclick="startTimer()">Старт таймера</button>
+
+<div id="uncheckedCounter" style="margin:10px 0;"></div>
+
+<button onclick="setFilter('all')">Все</button>
+<button onclick="setFilter('unchecked')">Непроверенные</button>
+<button onclick="setFilter('checked')">Проверенные</button>
 </style>
 </head>
 
@@ -129,7 +137,7 @@ textarea.comment{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get, remove } 
+import { getDatabase, ref, onValue, set, get, remove }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -146,7 +154,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentRoom = "";
+let currentFilter="all";
 
 // SEND TASK
 window.sendTask = function(){
@@ -157,53 +165,102 @@ window.sendTask = function(){
   currentRoom = room;
   set(ref(db,"rooms/"+room+"/task"), task);
 
-  const answersRef = ref(db,"rooms/"+room+"/answers");
+const answersRef = ref(db,"rooms/"+roomCode+"/answers");
 
-  onValue(answersRef,(snapshot)=>{
-    const answers = snapshot.val();
-    const container = document.getElementById("answersContainer");
-    container.innerHTML="";
+onValue(answersRef,(snapshot)=>{
 
-    if(!answers) return;
+  const data=snapshot.val();
+  const container=document.getElementById("answersContainer");
+  container.innerHTML="";
 
-    for(let name in answers){
+  if(!data) return;
 
-      const div = document.createElement("div");
+  let unchecked=0;
+
+  for(let student in data){
+
+    const attempts=data[student];
+    let index=1;
+
+    for(let id in attempts){
+
+      const attempt=attempts[id];
+
+      if(currentFilter==="checked" && !attempt.checked) continue;
+      if(currentFilter==="unchecked" && attempt.checked) continue;
+
+      const div=document.createElement("div");
       div.className="answer-card";
-      div.setAttribute("data-name", name.toLowerCase());
+
+      if(!attempt.checked){
+        div.style.borderLeft="4px solid orange";
+        unchecked++;
+      } else {
+        div.style.borderLeft="4px solid lime";
+      }
 
       div.innerHTML=`
-        <b>${name}</b>
-        <div class="answer-text">${answers[name]}</div>
+        <b>${student}</b> — Попытка ${index}<br>
+        <div>${attempt.text}</div>
+        <small>${new Date(attempt.time).toLocaleTimeString()}</small><br>
+        Статус: ${attempt.checked ? "✔ Проверено" : "❌ Непроверено"}<br>
 
-        <textarea class="comment"
-        placeholder="Comment..."
-        onchange="saveComment('${name}',this.value)">
-        </textarea>
-
-        <div class="score-buttons">
-          <button onclick="giveScore('${name}',0.5)">+0.5</button>
-          <button onclick="giveScore('${name}',1)">+1</button>
-          <button onclick="giveScore('${name}',1.5)">+1.5</button>
-          <button onclick="giveScore('${name}',2)">+2</button>
-          <button onclick="giveScore('${name}',2.5)">+2.5</button>
-          <button onclick="giveScore('${name}',3)">+3</button>
-
-          <button onclick="giveScore('${name}',-0.5)">-0.5</button>
-          <button onclick="giveScore('${name}',-1)">-1</button>
-          <button onclick="giveScore('${name}',-1.5)">-1.5</button>
-          <button onclick="giveScore('${name}',-2)">-2</button>
-          <button onclick="giveScore('${name}',-2.5)">-2.5</button>
-          <button onclick="giveScore('${name}',-3)">-3</button>
-
-          <button onclick="resetScore('${name}')">Reset</button>
-        </div>
+        <button onclick="grade('${student}','${id}',1)">+1</button>
+        <button onclick="grade('${student}','${id}',-1)">-1</button>
+        <button onclick="markChecked('${student}','${id}')">
+          Проверено
+        </button>
       `;
 
       container.appendChild(div);
+      index++;
     }
-  });
+  }
 
+  document.getElementById("uncheckedCounter").innerText=
+    "Непроверенных: "+unchecked;
+});
+window.grade = async function(student,id,value){
+
+  const room=document.getElementById("roomCode").value;
+
+  const scoreRef=ref(db,"rooms/"+room+"/scores/"+student);
+  const snap=await get(scoreRef);
+
+  let current=snap.exists()?snap.val():0;
+  await set(scoreRef,current+value);
+
+  await set(
+    ref(db,"rooms/"+room+"/answers/"+student+"/"+id+"/scoreGiven"),
+    value
+  );
+};
+
+window.markChecked=function(student,id){
+
+  const room=document.getElementById("roomCode").value;
+
+  set(
+    ref(db,"rooms/"+room+"/answers/"+student+"/"+id+"/checked"),
+    true
+  );
+};
+
+window.setFilter=function(type){
+  currentFilter=type;
+};
+
+window.startTimer=function(){
+
+  const room=document.getElementById("roomCode").value;
+  const sec=parseInt(document.getElementById("timerInput").value);
+
+  if(!sec) return;
+
+  const endTime=Date.now()+sec*1000;
+
+  set(ref(db,"rooms/"+room+"/timer/endTime"),endTime);
+};
   // LEADERBOARD
   onValue(ref(db,"rooms/"+room+"/scores"),(snapshot)=>{
     const scores = snapshot.val();
