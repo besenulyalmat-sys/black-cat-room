@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Black Cat Room – Student PRO</title>
+<title>Black Cat Room – Student PRO 3.0</title>
 
 <style>
 body{
@@ -31,7 +31,8 @@ body::before{
 .top-bar{
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:flex-start;
+  gap:20px;
 }
 
 .left-top{
@@ -70,7 +71,7 @@ button{
   background:#111;
   padding:15px;
   border-radius:15px;
-  width:200px;
+  width:220px;
 }
 
 .level-up{
@@ -99,25 +100,28 @@ button{
 <button onclick="joinRoom()">Join</button>
 </div>
 </div>
-<div id="timerBox" style="margin:10px 0;font-size:18px;"></div>
+
+<div>
+<div id="timerBox" style="font-size:18px;margin-bottom:10px;"></div>
 
 <div id="teacherCommentBox" style="
-  margin-top:10px;
   padding:10px;
   background:#111;
   border:1px solid #00ff9d;
   border-radius:10px;
+  margin-bottom:10px;
 ">
-  <b>💬 Комментарий учителя:</b>
-  <div id="teacherCommentText">Нет комментариев</div>
+<b>💬 Комментарий учителя:</b>
+<div id="teacherCommentText">Нет комментариев</div>
 </div>
-<div id="rankDisplay"></div>
+
 <div class="rank-box">
 <div id="rankDisplay">Очки: 0</div>
 <h4>🏆 Top 5</h4>
 <div id="studentLeaderboard"></div>
 </div>
 
+</div>
 </div>
 
 <h2>Current Task:</h2>
@@ -130,58 +134,72 @@ button{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, set }
+import { getDatabase, ref, onValue, push }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH",
+  databaseURL: "YOUR_DB_URL",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_BUCKET",
+  messagingSenderId: "YOUR_SENDER",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let currentRoom="";
+let currentName="";
 let currentLevel=1;
 
+// JOIN ROOM
 window.joinRoom=function(){
 
   const room=document.getElementById("roomCode").value;
   const name=document.getElementById("studentName").value;
+
   if(!room||!name) return alert("Fill fields");
 
   currentRoom=room;
+  currentName=name;
 
-// 💬 Комментарий
-onValue(ref(db,"rooms/"+room+"/comments/"+name),(snap)=>{
-  document.getElementById("teacherCommentText").innerText =
-    snap.val() || "Нет комментариев";
-});
+  // TASK
+  onValue(ref(db,"rooms/"+room+"/task"),snap=>{
+    document.getElementById("task").innerText =
+      snap.val() || "Waiting...";
+  });
 
-// ⏳ Таймер
-onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
-  const endTime=snap.val();
-  if(!endTime) return;
+  // COMMENTS
+  onValue(ref(db,"rooms/"+room+"/comments/"+name),snap=>{
+    document.getElementById("teacherCommentText").innerText =
+      snap.val() || "Нет комментариев";
+  });
 
-  const interval=setInterval(()=>{
-    const diff=endTime-Date.now();
+  // TIMER
+  onValue(ref(db,"rooms/"+room+"/timer/endTime"),snap=>{
+    const endTime=snap.val();
+    if(!endTime) return;
 
-    if(diff<=0){
-      clearInterval(interval);
-      document.getElementById("answerInput").disabled=true;
-      document.getElementById("timerBox").innerText="⛔ Время вышло";
-    } else {
-      document.getElementById("timerBox").innerText=
-        "⏳ Осталось: "+Math.floor(diff/1000)+" сек";
-    }
-  },1000);
-});
+    const interval=setInterval(()=>{
+      const diff=endTime-Date.now();
+
+      if(diff<=0){
+        clearInterval(interval);
+        document.getElementById("answerInput").disabled=true;
+        document.getElementById("timerBox").innerText="⛔ Время вышло";
+      }else{
+        document.getElementById("timerBox").innerText=
+          "⏳ Осталось: "+Math.floor(diff/1000)+" сек";
+      }
+    },1000);
+  });
+
+  // SCORE & LEVEL
+  onValue(ref(db,"rooms/"+room+"/scores/"+name),snap=>{
+
+    const points=snap.val()||0;
 
     let level=1;
     let levelText="Новичок";
@@ -191,7 +209,7 @@ onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
     if(points>=10){level=4;levelText="Чёрный Лорд";}
 
     document.getElementById("rankDisplay").innerHTML=
-    `Очки: ${points}/10<br>Уровень: ${levelText}`;
+      `Очки: ${points}/10<br>Уровень: ${levelText}`;
 
     const img=document.getElementById("catImage");
     img.src="cat-level"+level+".jpg";
@@ -204,6 +222,7 @@ onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
     currentLevel=level;
   });
 
+  // LEADERBOARD
   onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
     const scores=snap.val();
     const board=document.getElementById("studentLeaderboard");
@@ -211,7 +230,7 @@ onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
     if(!scores) return;
 
     const sorted=Object.entries(scores)
-    .sort((a,b)=>b[1]-a[1]);
+      .sort((a,b)=>b[1]-a[1]);
 
     sorted.slice(0,5).forEach(([name,pts],i)=>{
       const medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"🐾";
@@ -220,6 +239,7 @@ onValue(ref(db,"rooms/"+room+"/timer/endTime"),(snap)=>{
   });
 };
 
+// SUBMIT ANSWER (каждая попытка отдельно)
 window.submitAnswer=function(){
 
   const text=document.getElementById("answerInput").value;
