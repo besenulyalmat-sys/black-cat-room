@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <title>Hi Pupils — Student</title>
 
 <link rel="stylesheet" href="css/style.css">
@@ -22,8 +21,9 @@
 
 <button onclick="join()">Join</button>
 
-<h3>Task</h3>
+<div id="timerDisplay" class="timer"></div>
 
+<h3>Task</h3>
 <div id="task">Waiting...</div>
 
 <textarea id="answer" placeholder="Write answer"></textarea>
@@ -40,13 +40,9 @@
 <div id="board"></div>
 </div>
 
-</div>
-
-<div class="gif-popup" id="gifBox">
-<img id="gifImg">
 <div class="card">
 
-<h3>Lesson feedback</h3>
+<h3>Lesson Feedback</h3>
 
 <button onclick="feedback('good')">👍 I understand</button>
 
@@ -54,12 +50,17 @@
 
 <button onclick="feedback('bad')">👎 I don't understand</button>
 
+</div>
 
+</div>
+
+<div class="gif-popup" id="gifBox">
+<img id="gifImg">
 </div>
 
 <script type="module">
 
-import { initializeApp } 
+import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 import {
@@ -71,183 +72,173 @@ push
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543"
+apiKey:"AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+authDomain:"black-cat-room.firebaseapp.com",
+databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig)
+const db=getDatabase(app)
 
-let room="";
-let name="";
-let lastScore=0;
-
-const scoreGifs = {
-1:"1-ezgif.com-optimize.gif",
-2:"2-ezgif.com-optimize.gif",
-3:"3-ezgif.com-optimize.gif",
-4:"4-ezgif.com-optimize.gif",
-5:"5-ezgif.com-optimize.gif",
-6:"6-ezgif.com-optimize (1).gif",
-7:"7-ezgif.com-optimize.gif",
-8:"8-ezgif.com-optimize.gif",
-9:"9-ezgif.com-optimize.gif",
-10:"10-ezgif.com-optimize.gif"
-};
+let room=""
+let name=""
+let lastScore=0
 
 window.join=function(){
 
-room=document.getElementById("room").value;
-name=document.getElementById("name").value;
-
-if(!room || !name){
-alert("Enter room and name");
-return;
-}
+room=document.getElementById("room").value
+name=document.getElementById("name").value
 
 onValue(ref(db,"rooms/"+room+"/task"),snap=>{
-document.getElementById("task").innerText=snap.val() || "Waiting";
-});
+document.getElementById("task").innerText=snap.val()||"Waiting"
+})
 
 onValue(ref(db,"rooms/"+room+"/comments/"+name),snap=>{
-document.getElementById("comment").innerText=snap.val() || "";
-});
+document.getElementById("comment").innerText=snap.val()||""
+})
 
 onValue(ref(db,"rooms/"+room+"/scores/"+name),snap=>{
 
-const score=snap.val() || 0;
+const score=snap.val()||0
 
-if(score > lastScore){
-showGif(score);
+if(score>lastScore){
+
+showGif(score)
+
 }
 
-lastScore=score;
+lastScore=score
 
-});
+})
+
+onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
+
+const scores=snap.val()
+
+if(!scores)return
+
+const sorted=Object.entries(scores)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,10)
+
+let html=""
+
+sorted.forEach(([n,p])=>{
+html+=n+" — "+p+"<br>"
+})
+
+document.getElementById("board").innerHTML=html
+
+})
+
 onValue(ref(db,"rooms/"+room+"/timer"),snap=>{
 
-const endTime = snap.val()
+const end=snap.val()
 
-if(!endTime) return
+if(!end) return
 
-const interval = setInterval(()=>{
+const interval=setInterval(()=>{
 
-const diff = endTime - Date.now()
+const diff=end-Date.now()
 
-if(diff <= 0){
+const sec=Math.floor(diff/1000)
+
+if(diff<=0){
 
 clearInterval(interval)
 
-document.getElementById("answer").disabled = true
+document.getElementById("timerDisplay").innerText="Time is over"
 
-alert("Time is over")
+document.getElementById("answer").disabled=true
+
+return
 
 }
+
+document.getElementById("timerDisplay").innerText=
+"⏱ Time left: "+sec+"s"
 
 },1000)
 
 })
-onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
 
-const scores=snap.val();
-if(!scores) return;
-
-const sorted=Object.entries(scores)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,10);
-
-let html="";
-
-sorted.forEach(([n,p])=>{
-html+=n+" — "+p+"<br>";
-});
-
-document.getElementById("board").innerHTML=html;
-
-});
+onValue(ref(db,"rooms/"+room+"/shutup/"+name),snap=>{
+if(snap.val()) showShut()
+})
 
 onValue(ref(db,"rooms/"+room+"/gifcomment/"+name),snap=>{
 
-const gif=snap.val();
+const gif=snap.val()
 
 if(gif){
-showPopup(gif);
+
+const img=document.getElementById("gifImg")
+const box=document.getElementById("gifBox")
+
+img.src=gif
+
+box.style.display="block"
+
+setTimeout(()=>{
+box.style.display="none"
+},3000)
+
 }
 
-});
-
-onValue(ref(db,"rooms/"+room+"/shutup/"+name),snap=>{
-
-if(snap.val()){
-showShut();
-}
-
-});
+})
 
 }
 
 window.send=function(){
 
-const text=document.getElementById("answer").value;
+const text=document.getElementById("answer").value
 
-if(!text) return;
+if(!text) return
 
 push(ref(db,"rooms/"+room+"/answers/"+name),{
 text:text,
 time:Date.now()
-});
+})
 
-document.getElementById("answer").value="";
+document.getElementById("answer").value=""
 
 }
+
 window.feedback=function(type){
 
 set(ref(db,"rooms/"+room+"/feedback/"+name),type)
 
-alert("Thanks for feedback!")
+alert("Thanks!")
 
 }
+
 function showGif(points){
 
-const gifFile = scoreGifs[points];
+const gif=document.getElementById("gifImg")
+const box=document.getElementById("gifBox")
 
-if(!gifFile) return;
+gif.src=points+"-ezgif.com-optimize.gif"
 
-showPopup(gifFile);
+box.style.display="block"
 
-}
-
-function showPopup(file){
-
-const gif=document.getElementById("gifImg");
-const box=document.getElementById("gifBox");
-
-gif.src=file+"?t="+Date.now();
-
-box.style.display="block";
-
-setTimeout(()=>{
-box.style.display="none";
-},3000);
+setTimeout(()=>box.style.display="none",3000)
 
 }
 
 function showShut(){
 
-const gifs=[
-"SHUT.gif",
-"SHUT1.gif",
-"SHUT2.gif"
-];
+const gifs=["SHUT.gif","SHUT1.gif","SHUT2.gif"]
 
-const random=Math.floor(Math.random()*gifs.length);
+const random=Math.floor(Math.random()*gifs.length)
 
-showPopup(gifs[random]);
+const gif=document.getElementById("gifImg")
+const box=document.getElementById("gifBox")
+
+gif.src=gifs[random]
+
+box.style.display="block"
+
+setTimeout(()=>box.style.display="none",3000)
 
 }
 
