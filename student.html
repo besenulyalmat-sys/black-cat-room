@@ -5,9 +5,9 @@
 
 <meta charset="UTF-8">
 
-<title>🌸 Hi Pupils — Student</title>
+<title>Hi Pupils — Student</title>
 
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="style.css">
 
 </head>
 
@@ -17,9 +17,9 @@
 
 <header>🌸 Hi Pupils — Student</header>
 
-<input id="room" placeholder="Room code">
+<input id="room" placeholder="Room">
 
-<input id="name" placeholder="Your name">
+<input id="name" placeholder="Name">
 
 <button onclick="join()">Join</button>
 
@@ -28,8 +28,6 @@
 <div id="task">Waiting...</div>
 
 <textarea id="answer" placeholder="Write answer"></textarea>
-
-<input type="file" id="screen">
 
 <button onclick="send()">Submit</button>
 
@@ -142,6 +140,16 @@ document.getElementById("board").innerHTML=html;
 
 });
 
+onValue(ref(db,"rooms/"+room+"/shutup/"+name),snap=>{
+
+if(snap.val()){
+
+showShut()
+
+}
+
+});
+
 }
 
 window.send=function(){
@@ -164,15 +172,35 @@ function showGif(points){
 const gif=document.getElementById("gifImg");
 const box=document.getElementById("gifBox");
 
-gif.src="gifs/point/"+points+".png";
+gif.src=points+"-ezgif.com-optimize.gif";
 
 box.style.display="block";
 
 setTimeout(()=>{
+
 box.style.display="none";
-},2500);
+
+},3000);
 
 }
+
+function showShut(){
+
+const gif=document.getElementById("gifImg");
+const box=document.getElementById("gifBox");
+
+gif.src="SHUT.gif";
+
+box.style.display="block";
+
+setTimeout(()=>{
+
+box.style.display="none";
+
+},3000);
+
+}
+
 </script>
 
 </body>
