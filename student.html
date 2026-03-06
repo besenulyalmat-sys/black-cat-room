@@ -2,14 +2,14 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Black Cat Room – Student PRO 4.0</title>
+<title>Black Cat Room — Student</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-background:#0f0f0f;
+background:linear-gradient(135deg,#0a0a0a,#111,#1a1a1a);
 color:#00ff9d;
 }
 
@@ -32,39 +32,38 @@ align-items:center;
 gap:15px;
 }
 
-#catImage{
-width:120px;
-border-radius:20px;
-transition:0.5s;
-}
-
 input{
-padding:8px;
+padding:10px;
 background:#111;
 border:1px solid #00ff9d;
 color:#00ff9d;
-border-radius:6px;
+border-radius:8px;
 }
 
 textarea{
 width:100%;
-height:320px;
+height:340px;
 resize:vertical;
 padding:15px;
-background:#111;
+background:#0f0f0f;
 color:#00ff9d;
 border:1px solid #00ff9d;
 border-radius:15px;
 font-size:16px;
+box-shadow:0 0 10px #00ff9d33 inset;
 }
 
 button{
 padding:10px 20px;
 background:#00ff9d;
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
 font-weight:bold;
+}
+
+button:hover{
+background:#00cc7a;
 }
 
 .rank-box{
@@ -72,19 +71,8 @@ background:#111;
 padding:15px;
 border-radius:15px;
 width:220px;
+box-shadow:0 0 15px #00ff9d55;
 }
-
-.level-up{
-animation:glow 0.6s;
-}
-
-@keyframes glow{
-0%{transform:scale(1);}
-50%{transform:scale(1.2);}
-100%{transform:scale(1);}
-}
-
-/* GIF reward */
 
 #gifReward{
 position:fixed;
@@ -111,8 +99,6 @@ box-shadow:0 0 40px #00ff9d;
 <div class="top-bar">
 
 <div class="left-top">
-
-<img id="catImage" src="cat-level1.jpg">
 
 <div>
 
@@ -167,7 +153,6 @@ margin-bottom:10px;
 </div>
 
 
-<!-- GIF reward -->
 <div id="gifReward">
 <img id="rewardGif">
 </div>
@@ -176,7 +161,8 @@ margin-bottom:10px;
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 import {
 getDatabase,
@@ -184,7 +170,6 @@ ref,
 onValue,
 push
 }
-
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 
@@ -206,12 +191,9 @@ const db = getDatabase(app);
 
 let currentRoom="";
 let currentName="";
-let currentLevel=1;
 let lastPoints=0;
 
 
-
-// JOIN ROOM
 
 window.joinRoom=function(){
 
@@ -224,9 +206,6 @@ currentRoom=room;
 currentName=name;
 
 
-
-// TASK
-
 onValue(ref(db,"rooms/"+room+"/task"),snap=>{
 
 document.getElementById("task").innerText=
@@ -234,9 +213,6 @@ snap.val() || "Waiting...";
 
 });
 
-
-
-// TEACHER COMMENT
 
 onValue(ref(db,"rooms/"+room+"/comments/"+name),snap=>{
 
@@ -246,13 +222,9 @@ snap.val() || "Нет комментариев";
 });
 
 
-
-// TIMER
-
 onValue(ref(db,"rooms/"+room+"/timer/endTime"),snap=>{
 
 const endTime=snap.val();
-
 if(!endTime) return;
 
 const interval=setInterval(()=>{
@@ -279,17 +251,12 @@ document.getElementById("timerBox").innerText=
 });
 
 
-
-
-// SCORE
-
 onValue(ref(db,"rooms/"+room+"/scores/"+name),snap=>{
 
 const points=snap.val()||0;
 
-
-
-// GIF reward when score increased
+document.getElementById("rankDisplay").innerHTML=
+`Очки: ${points}`;
 
 if(points>lastPoints){
 
@@ -299,43 +266,12 @@ showReward(points);
 
 lastPoints=points;
 
-
-
-let level=1;
-let levelText="Новичок";
-
-if(points>=3){level=2;levelText="Котёнок";}
-if(points>=6){level=3;levelText="Охотник";}
-if(points>=10){level=4;levelText="Чёрный Лорд";}
-
-document.getElementById("rankDisplay").innerHTML=
-
-`Очки: ${points}/10<br>Уровень: ${levelText}`;
-
-const img=document.getElementById("catImage");
-
-img.src="cat-level"+level+".jpg";
-
-if(level>currentLevel){
-
-img.classList.add("level-up");
-
-setTimeout(()=>img.classList.remove("level-up"),600);
-
-}
-
-currentLevel=level;
-
 });
 
-
-
-// LEADERBOARD
 
 onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
 
 const scores=snap.val();
-
 const board=document.getElementById("studentLeaderboard");
 
 board.innerHTML="";
@@ -343,7 +279,6 @@ board.innerHTML="";
 if(!scores) return;
 
 const sorted=Object.entries(scores)
-
 .sort((a,b)=>b[1]-a[1]);
 
 sorted.slice(0,5).forEach(([name,pts],i)=>{
@@ -359,8 +294,6 @@ board.innerHTML+=`${medal} ${name} — ${pts}<br>`;
 };
 
 
-
-// SUBMIT ANSWER
 
 window.submitAnswer=function(){
 
@@ -383,14 +316,12 @@ document.getElementById("answerInput").value="";
 
 
 
-// GIF reward function
-
 function showReward(points){
 
 const gif=document.getElementById("rewardGif");
 const box=document.getElementById("gifReward");
 
-gif.src="gifs/point/"+points+".gif";
+gif.src="gifs/points/"+points+".gif";
 
 box.style.display="block";
 
