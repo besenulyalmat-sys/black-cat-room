@@ -152,7 +152,14 @@ window.shutUp=function(){
 set(ref(db,"rooms/"+room+"/meme"),"shutup");
 
 }
-
+document.getElementById("searchInput").addEventListener("input",function(){
+ const value=this.value.toLowerCase();
+ const cards=document.querySelectorAll(".answer-card");
+ cards.forEach(card=>{
+ const name=card.getAttribute("data-name");
+ card.style.display=name.includes(value)?"block":"none";
+ });
+});
 </script>
 
 </body>
@@ -160,21 +167,7 @@ set(ref(db,"rooms/"+room+"/meme"),"shutup");
 
 
 
-document.getElementById("searchInput").addEventListener("input",function(){
 
-const value=this.value.toLowerCase();
-
-const cards=document.querySelectorAll(".answer-card");
-
-cards.forEach(card=>{
-
-const name=card.getAttribute("data-name");
-
-card.style.display=name.includes(value)?"block":"none";
-
-});
-
-});
 
 </script>
 
