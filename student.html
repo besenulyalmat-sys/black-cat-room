@@ -196,18 +196,24 @@ box.style.display="none";
 
 function showShut(){
 
+const gifs=[
+"SHUT.gif",
+"SHUT1.gif",
+"SHUT2.gif"
+]
+
+const random = Math.floor(Math.random()*gifs.length)
+
 const gif=document.getElementById("gifImg");
 const box=document.getElementById("gifBox");
 
-gif.src="SHUT.gif";
+gif.src=gifs[random]
 
-box.style.display="block";
+box.style.display="block"
 
 setTimeout(()=>{
-
-box.style.display="none";
-
-},3000);
+box.style.display="none"
+},3000)
 
 }
 
