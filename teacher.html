@@ -1,184 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
-<title>Black Cat Room — Teacher PRO 4.0</title>
+<title>Black Cat Room — Teacher 5.0</title>
 
-<style>
+<link rel="stylesheet" href="css/style.css">
 
-body{
-margin:0;
-font-family:Arial;
-background:#0f0f0f;
-color:#00ff9d;
-}
-
-header{
-padding:20px;
-font-size:26px;
-font-weight:bold;
-}
-
-.container{
-width:95%;
-margin:auto;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-bottom:10px;
-background:#111;
-color:#00ff9d;
-border:1px solid #00ff9d;
-border-radius:10px;
-}
-
-#taskInput{
-width:100%;
-height:220px;
-resize:vertical;
-padding:15px;
-background:#111;
-color:#00ff9d;
-border:1px solid #00ff9d;
-border-radius:15px;
-font-size:16px;
-}
-
-button{
-padding:7px 12px;
-margin:4px 3px;
-background:#00ff9d;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-background:#00cc7a;
-}
-
-.teacher-layout{
-display:flex;
-gap:25px;
-}
-
-.answers-section{
-flex:1;
-}
-
-.leaderboard-section{
-width:260px;
-position:sticky;
-top:20px;
-height:fit-content;
-background:#111;
-padding:15px;
-border-radius:15px;
-box-shadow:0 0 15px #00ff9d;
-}
-
-.answer-card{
-background:#1a1a1a;
-padding:15px;
-margin-bottom:15px;
-border-left:4px solid orange;
-border-radius:10px;
-}
-
-.answer-card.checked{
-border-left:4px solid lime;
-}
-
-.answer-text{
-white-space:pre-wrap;
-word-break:break-word;
-background:#111;
-padding:10px;
-border-radius:10px;
-margin:10px 0;
-}
-
-.new-answer{
-animation:glow 1s infinite alternate;
-}
-
-@keyframes glow{
-from{box-shadow:0 0 5px orange;}
-to{box-shadow:0 0 20px orange;}
-}
-
-.controls-row{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-}
-
-textarea{
-width:100%;
-background:#111;
-border:1px solid #00ff9d;
-color:#00ff9d;
-border-radius:10px;
-padding:8px;
-margin-top:10px;
-height:70px;
-resize:vertical;
-}
-
-</style>
 </head>
 
 <body>
 
-<header>🐾 Black Cat Room — Teacher PRO 4.0</header>
-
 <div class="container">
 
-<input id="roomCode" placeholder="Room code...">
+<header>👨‍🏫 Teacher Panel</header>
 
-<textarea id="taskInput" placeholder="Write task..."></textarea>
+<input id="roomCode" placeholder="Room">
 
-<div class="controls-row">
+<textarea id="taskInput" placeholder="Write task"></textarea>
 
 <button onclick="sendTask()">Send Task</button>
-<button onclick="clearAnswers()">Clear Answers</button>
-<button onclick="closeRoom()">Close Room</button>
+
+<button onclick="shutUp()">SHUT UP</button>
+
+<div class="flex">
+
+<div style="flex:1">
+
+<h3>Student Answers</h3>
+
+<div id="answers"></div>
 
 </div>
 
-<div class="teacher-layout">
+<div class="sidebar">
 
-<div class="answers-section">
+<div class="leaderboard">
 
-<input type="text" id="searchInput" placeholder="🔍 Search student...">
+<h3>Leaderboard</h3>
 
-<div class="controls-row">
-
-<input id="timerInput" placeholder="Timer (seconds)">
-<button onclick="startTimer()">Start Timer</button>
-
-<button onclick="setFilter('all')">All</button>
-<button onclick="setFilter('unchecked')">Unchecked</button>
-<button onclick="setFilter('checked')">Checked</button>
+<div id="leaderboard"></div>
 
 </div>
-
-<div id="uncheckedCounter"></div>
-
-<h3>Student Attempts</h3>
-
-<div id="answersContainer"></div>
-
-</div>
-
-<div class="leaderboard-section">
-
-<h3>🏆 Leaderboard</h3>
-
-<div id="leaderboardContainer"></div>
 
 </div>
 
@@ -195,248 +58,105 @@ import {
 getDatabase,
 ref,
 onValue,
-set,
-get,
-remove
+set
 }
-
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+const firebaseConfig={
 
-const firebaseConfig = {
-
-apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-authDomain: "black-cat-room.firebaseapp.com",
-databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "black-cat-room",
-storageBucket: "black-cat-room.firebasestorage.app",
-messagingSenderId: "80028312826",
-appId: "1:80028312826:web:ee918db88c71a0c1335543"
+apiKey:"AIzaSy...",
+authDomain:"black-cat-room.firebaseapp.com",
+databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app"
 
 };
 
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-let currentRoom="";
-let currentFilter="all";
-let seenAttempts=new Set();
-
-
+let room="";
 
 window.sendTask=function(){
 
-const room=document.getElementById("roomCode").value;
+room=document.getElementById("roomCode").value;
+
 const task=document.getElementById("taskInput").value;
-
-if(!room||!task) return alert("Fill fields");
-
-currentRoom=room;
 
 set(ref(db,"rooms/"+room+"/task"),task);
 
-listenAnswers(room);
-listenLeaderboard(room);
+listenAnswers();
 
-};
+}
 
+function listenAnswers(){
 
+onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
 
-function listenAnswers(room){
+const data=snap.val();
 
-onValue(ref(db,"rooms/"+room+"/answers"),snapshot=>{
-
-const data=snapshot.val();
-const container=document.getElementById("answersContainer");
+const container=document.getElementById("answers");
 
 container.innerHTML="";
 
-if(!data) return;
+if(!data)return;
 
-let unchecked=0;
-
-Object.keys(data).forEach(student=>{
+for(let student in data){
 
 const attempts=data[student];
 
-let index=1;
+for(let id in attempts){
 
-Object.keys(attempts).forEach(id=>{
+const a=attempts[id];
 
-const attempt=attempts[id];
+container.innerHTML+=`
 
-if(currentFilter==="checked" && !attempt.checked) return;
-if(currentFilter==="unchecked" && attempt.checked) return;
+<div class="card">
 
-const div=document.createElement("div");
+<b>${student}</b>
 
-div.className="answer-card";
+<p>${a.text}</p>
 
-div.setAttribute("data-name",student.toLowerCase());
+<button onclick="score('${student}',1)">+1</button>
 
-if(attempt.checked){
+<button onclick="score('${student}',-1)">-1</button>
 
-div.classList.add("checked");
+<button onclick="comment('${student}')">Comment</button>
 
-}else{
-
-unchecked++;
-
-}
-
-if(!seenAttempts.has(id)){
-
-div.classList.add("new-answer");
-seenAttempts.add(id);
-
-}
-
-div.innerHTML=`
-
-<b>${student}</b> — Attempt ${index}
-
-<div class="answer-text">${attempt.text}</div>
-
-<small>${new Date(attempt.time).toLocaleTimeString()}</small><br>
-
-Status: ${attempt.checked ? "✔ Checked" : "❗ Unchecked"}
-
-<br>
-
-<button onclick="grade('${student}',1)">+1</button>
-<button onclick="grade('${student}',2)">+2</button>
-<button onclick="grade('${student}',3)">+3</button>
-
-<button onclick="grade('${student}',-1)">-1</button>
-
-<button onclick="markChecked('${student}','${id}')">Checked</button>
-
-<textarea placeholder="Comment..."
-
-onchange="saveComment('${student}',this.value)"></textarea>
+</div>
 
 `;
 
-container.appendChild(div);
+}
 
-index++;
-
-});
-
-});
-
-document.getElementById("uncheckedCounter").innerText=
-
-"Unchecked: "+unchecked;
+}
 
 });
 
 }
 
+window.score=function(student,val){
 
-
-window.grade=async function(student,value){
-
-const scoreRef=ref(db,"rooms/"+currentRoom+"/scores/"+student);
-
-const snap=await get(scoreRef);
-
-let current=snap.exists()?snap.val():0;
-
-let newScore=current+value;
-
-if(newScore<0) newScore=0;
-
-await set(scoreRef,newScore);
-
-};
-
-
-
-window.markChecked=function(student,id){
-
-set(ref(db,"rooms/"+currentRoom+"/answers/"+student+"/"+id+"/checked"),true);
-
-};
-
-
-
-function listenLeaderboard(room){
-
-onValue(ref(db,"rooms/"+room+"/scores"),snapshot=>{
-
-const scores=snapshot.val();
-
-const board=document.getElementById("leaderboardContainer");
-
-board.innerHTML="";
-
-if(!scores) return;
-
-const sorted=Object.entries(scores)
-
-.sort((a,b)=>b[1]-a[1]);
-
-sorted.forEach(([name,pts],i)=>{
-
-const medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"🐾";
-
-board.innerHTML+=`${medal} ${name} — ${pts} pts<br>`;
-
-});
-
-});
+set(ref(db,"rooms/"+room+"/scores/"+student),val);
 
 }
 
+window.comment=function(student){
 
+const text=prompt("Comment");
 
-window.setFilter=function(type){
+set(ref(db,"rooms/"+room+"/comments/"+student),text);
 
-currentFilter=type;
+}
 
-listenAnswers(currentRoom);
+window.shutUp=function(){
 
-};
+set(ref(db,"rooms/"+room+"/meme"),"shutup");
 
+}
 
+</script>
 
-window.startTimer=function(){
-
-const sec=parseInt(document.getElementById("timerInput").value);
-
-if(!sec) return;
-
-const end=Date.now()+sec*1000;
-
-set(ref(db,"rooms/"+currentRoom+"/timer"),{endTime:end});
-
-};
-
-
-
-window.saveComment=function(student,text){
-
-set(ref(db,"rooms/"+currentRoom+"/comments/"+student),text);
-
-};
-
-
-
-window.clearAnswers=function(){
-
-remove(ref(db,"rooms/"+currentRoom+"/answers"));
-
-};
-
-
-
-window.closeRoom=function(){
-
-remove(ref(db,"rooms/"+currentRoom));
-
-};
+</body>
+</html>
 
 
 
