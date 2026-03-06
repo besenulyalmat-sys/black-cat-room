@@ -8,6 +8,7 @@
 <title>Hi Pupils — Teacher</title>
 
 <link rel="stylesheet" href="css/style.css">
+
 </head>
 
 <body>
@@ -52,26 +53,30 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-import { getDatabase, ref, onValue, set, get }
-
+import {
+getDatabase,
+ref,
+onValue,
+set,
+get
+}
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
+apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+authDomain: "black-cat-room.firebaseapp.com",
+databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "black-cat-room",
+storageBucket: "black-cat-room.firebasestorage.app",
+messagingSenderId: "80028312826",
+appId: "1:80028312826:web:ee918db88c71a0c1335543"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let room="";
 
@@ -80,6 +85,11 @@ window.sendTask=function(){
 room=document.getElementById("room").value;
 
 const task=document.getElementById("task").value;
+
+if(!room || !task){
+alert("Enter room and task");
+return;
+}
 
 set(ref(db,"rooms/"+room+"/task"),task);
 
@@ -144,9 +154,7 @@ const sorted=Object.entries(scores)
 let html="";
 
 sorted.forEach(([n,p])=>{
-
 html+=n+" — "+p+"<br>";
-
 });
 
 document.getElementById("board").innerHTML=html;
@@ -170,27 +178,30 @@ if(newScore<0)newScore=0;
 set(scoreRef,newScore);
 
 }
+
 window.gifComment=function(student){
 
 const gifs=[
 "comment.gif",
 "comment1.gif"
-]
+];
 
-const random=Math.floor(Math.random()*gifs.length)
+const random=Math.floor(Math.random()*gifs.length);
 
-set(ref(db,"rooms/"+room+"/gifcomment/"+student),gifs[random])
+set(ref(db,"rooms/"+room+"/gifcomment/"+student),
+gifs[random]+"?t="+Date.now());
 
 }
+
 window.comment=function(student,text){
 
-set(ref(db,"rooms/"+room+"/comments/"+student),text)
+set(ref(db,"rooms/"+room+"/comments/"+student),text);
 
 }
 
 window.shutup=function(student){
 
-set(ref(db,"rooms/"+room+"/shutup/"+student),true)
+set(ref(db,"rooms/"+room+"/shutup/"+student),Date.now());
 
 }
 
