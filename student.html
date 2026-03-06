@@ -96,7 +96,26 @@ onValue(ref(db,"rooms/"+room+"/task"),snap=>{
 document.getElementById("task").innerText=snap.val()||"Waiting";
 
 });
+onValue(ref(db,"rooms/"+room+"/gifcomment/"+name),snap=>{
 
+const gif=snap.val()
+
+if(gif){
+
+const img=document.getElementById("gifImg")
+const box=document.getElementById("gifBox")
+
+img.src=gif
+
+box.style.display="block"
+
+setTimeout(()=>{
+box.style.display="none"
+},3000)
+
+}
+
+})
 onValue(ref(db,"rooms/"+room+"/comments/"+name),snap=>{
 
 document.getElementById("comment").innerText=snap.val()||"";
