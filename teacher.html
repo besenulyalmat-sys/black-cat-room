@@ -2,134 +2,151 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Black Cat Room — Teacher PRO 3.0</title>
+<title>Black Cat Room — Teacher PRO 4.0</title>
 
 <style>
+
 body{
-  margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#0f0f0f,#141414,#1a1f1c);
-  color:#00ff9d;
+margin:0;
+font-family:Arial;
+background:#0f0f0f;
+color:#00ff9d;
 }
 
 header{
-  padding:20px;
-  font-size:26px;
-  font-weight:bold;
+padding:20px;
+font-size:26px;
+font-weight:bold;
 }
 
 .container{
-  width:95%;
-  margin:auto;
+width:95%;
+margin:auto;
 }
 
 input{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  background:#111;
-  color:#00ff9d;
-  border:1px solid #00ff9d;
-  border-radius:10px;
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#111;
+color:#00ff9d;
+border:1px solid #00ff9d;
+border-radius:10px;
 }
 
 #taskInput{
-  width:100%;
-  height:180px;      /* ← увеличили высоту */
-  resize:vertical;   /* можно растягивать вручную */
-  padding:15px;
-  background:#111;
-  color:#00ff9d;
-  border:1px solid #00ff9d;
-  border-radius:15px;
-  font-size:16px;
+width:100%;
+height:220px;
+resize:vertical;
+padding:15px;
+background:#111;
+color:#00ff9d;
+border:1px solid #00ff9d;
+border-radius:15px;
+font-size:16px;
 }
 
 button{
-  padding:7px 12px;
-  margin:4px 3px;
-  background:#00ff9d;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
+padding:7px 12px;
+margin:4px 3px;
+background:#00ff9d;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
 }
 
 button:hover{
-  background:#00cc7a;
+background:#00cc7a;
 }
 
 .teacher-layout{
-  display:flex;
-  gap:25px;
+display:flex;
+gap:25px;
 }
 
 .answers-section{
-  flex:1;
+flex:1;
 }
 
 .leaderboard-section{
-  width:260px;
-  position:sticky;
-  top:20px;
-  height:fit-content;
-  background:#111;
-  padding:15px;
-  border-radius:15px;
-  box-shadow:0 0 15px #00ff9d;
+width:260px;
+position:sticky;
+top:20px;
+height:fit-content;
+background:#111;
+padding:15px;
+border-radius:15px;
+box-shadow:0 0 15px #00ff9d;
 }
 
 .answer-card{
-  background:#1a1a1a;
-  padding:15px;
-  margin-bottom:15px;
-  border-left:4px solid orange;
-  border-radius:10px;
-}
-
-.answer-text{
-  white-space:pre-wrap;
-  word-break:break-word;
-  background:#111;
-  padding:10px;
-  border-radius:10px;
-  margin:10px 0;
+background:#1a1a1a;
+padding:15px;
+margin-bottom:15px;
+border-left:4px solid orange;
+border-radius:10px;
 }
 
 .answer-card.checked{
-  border-left:4px solid lime;
+border-left:4px solid lime;
+}
+
+.answer-text{
+white-space:pre-wrap;
+word-break:break-word;
+background:#111;
+padding:10px;
+border-radius:10px;
+margin:10px 0;
 }
 
 .new-answer{
-  animation:glow 1s infinite alternate;
+animation:glow 1s infinite alternate;
 }
 
 @keyframes glow{
-  from{box-shadow:0 0 5px orange;}
-  to{box-shadow:0 0 20px orange;}
+from{box-shadow:0 0 5px orange;}
+to{box-shadow:0 0 20px orange;}
 }
 
 .controls-row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
 }
+
+textarea{
+width:100%;
+background:#111;
+border:1px solid #00ff9d;
+color:#00ff9d;
+border-radius:10px;
+padding:8px;
+margin-top:10px;
+height:70px;
+resize:vertical;
+}
+
 </style>
 </head>
 
 <body>
 
-<header>🐾 Black Cat Room — Teacher PRO 3.0</header>
+<header>🐾 Black Cat Room — Teacher PRO 4.0</header>
 
 <div class="container">
 
 <input id="roomCode" placeholder="Room code...">
+
 <textarea id="taskInput" placeholder="Write task..."></textarea>
 
 <div class="controls-row">
+
 <button onclick="sendTask()">Send Task</button>
 <button onclick="clearAnswers()">Clear Answers</button>
 <button onclick="closeRoom()">Close Room</button>
+
 </div>
 
 <div class="teacher-layout">
@@ -139,200 +156,306 @@ button:hover{
 <input type="text" id="searchInput" placeholder="🔍 Search student...">
 
 <div class="controls-row">
+
 <input id="timerInput" placeholder="Timer (seconds)">
 <button onclick="startTimer()">Start Timer</button>
 
 <button onclick="setFilter('all')">All</button>
 <button onclick="setFilter('unchecked')">Unchecked</button>
 <button onclick="setFilter('checked')">Checked</button>
+
 </div>
 
 <div id="uncheckedCounter"></div>
 
 <h3>Student Attempts</h3>
+
 <div id="answersContainer"></div>
 
 </div>
 
 <div class="leaderboard-section">
+
 <h3>🏆 Leaderboard</h3>
+
 <div id="leaderboardContainer"></div>
+
 </div>
 
 </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, get, remove, push }
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+onValue,
+set,
+get,
+remove
+}
+
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 const firebaseConfig = {
-  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-  authDomain: "black-cat-room.firebaseapp.com",
-  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "black-cat-room",
-  storageBucket: "black-cat-room.firebasestorage.app",
-  messagingSenderId: "80028312826",
-  appId: "1:80028312826:web:ee918db88c71a0c1335543",
-  measurementId: "G-9W8RSBP8WQ"
+
+apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+authDomain: "black-cat-room.firebaseapp.com",
+databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "black-cat-room",
+storageBucket: "black-cat-room.firebasestorage.app",
+messagingSenderId: "80028312826",
+appId: "1:80028312826:web:ee918db88c71a0c1335543"
+
 };
+
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentRoom = "";
-let currentFilter = "all";
-let seenAttempts = new Set();
+let currentRoom="";
+let currentFilter="all";
+let seenAttempts=new Set();
 
-window.sendTask = function(){
 
-  const room = document.getElementById("roomCode").value;
-  const task = document.getElementById("taskInput").value;
-  if(!room || !task) return alert("Fill fields");
 
-  currentRoom = room;
-  set(ref(db,"rooms/"+room+"/task"),task);
+window.sendTask=function(){
 
-  listenAnswers(room);
-  listenLeaderboard(room);
-}
+const room=document.getElementById("roomCode").value;
+const task=document.getElementById("taskInput").value;
+
+if(!room||!task) return alert("Fill fields");
+
+currentRoom=room;
+
+set(ref(db,"rooms/"+room+"/task"),task);
+
+listenAnswers(room);
+listenLeaderboard(room);
+
+};
+
+
 
 function listenAnswers(room){
 
-  onValue(ref(db,"rooms/"+room+"/answers"),(snapshot)=>{
+onValue(ref(db,"rooms/"+room+"/answers"),snapshot=>{
 
-    const data = snapshot.val();
-    const container = document.getElementById("answersContainer");
-    container.innerHTML = "";
+const data=snapshot.val();
+const container=document.getElementById("answersContainer");
 
-    if(!data) return;
+container.innerHTML="";
 
-    let unchecked = 0;
+if(!data) return;
 
-    Object.keys(data).forEach(student=>{
+let unchecked=0;
 
-      const attempts = data[student];
-      let index = 1;
+Object.keys(data).forEach(student=>{
 
-      Object.keys(attempts).forEach(id=>{
+const attempts=data[student];
 
-        const attempt = attempts[id];
+let index=1;
 
-        if(currentFilter==="checked" && !attempt.checked) return;
-        if(currentFilter==="unchecked" && attempt.checked) return;
+Object.keys(attempts).forEach(id=>{
 
-        const div = document.createElement("div");
-        div.className = "answer-card";
-        div.setAttribute("data-name",student.toLowerCase());
+const attempt=attempts[id];
 
-        if(attempt.checked){
-          div.classList.add("checked");
-        } else {
-          unchecked++;
-        }
+if(currentFilter==="checked" && !attempt.checked) return;
+if(currentFilter==="unchecked" && attempt.checked) return;
 
-        if(!seenAttempts.has(id)){
-          div.classList.add("new-answer");
-          seenAttempts.add(id);
-        }
+const div=document.createElement("div");
 
-        div.innerHTML = `
-          <b>${student}</b> — Attempt ${index}<br>
-          <div class="answer-text">${attempt.text}</div>
-          <small>${new Date(attempt.time).toLocaleTimeString()}</small><br>
-          Status: ${attempt.checked ? "✔ Checked" : "❗ Unchecked"}<br>
+div.className="answer-card";
 
-          <div>
-          <button onclick="grade('${student}','${id}',1)">+1</button>
-          <button onclick="grade('${student}','${id}',-1)">-1</button>
-          <button onclick="markChecked('${student}','${id}')">Mark Checked</button>
-          </div>
+div.setAttribute("data-name",student.toLowerCase());
 
-          <textarea placeholder="Comment..."
-            onchange="saveComment('${student}',this.value)">
-          </textarea>
-        `;
+if(attempt.checked){
 
-        container.appendChild(div);
-        index++;
-      });
+div.classList.add("checked");
 
-    });
+}else{
 
-    document.getElementById("uncheckedCounter").innerText =
-      "Unchecked: "+unchecked;
-  });
+unchecked++;
+
 }
 
-window.grade = async function(student,id,value){
+if(!seenAttempts.has(id)){
 
-  const scoreRef = ref(db,"rooms/"+currentRoom+"/scores/"+student);
-  const snap = await get(scoreRef);
+div.classList.add("new-answer");
+seenAttempts.add(id);
 
-  let current = snap.exists()?snap.val():0;
-  let newScore = current + value;
-  if(newScore<0) newScore=0;
-
-  await set(scoreRef,newScore);
 }
 
-window.markChecked = function(student,id){
-  set(ref(db,"rooms/"+currentRoom+"/answers/"+student+"/"+id+"/checked"),true);
+div.innerHTML=`
+
+<b>${student}</b> — Attempt ${index}
+
+<div class="answer-text">${attempt.text}</div>
+
+<small>${new Date(attempt.time).toLocaleTimeString()}</small><br>
+
+Status: ${attempt.checked ? "✔ Checked" : "❗ Unchecked"}
+
+<br>
+
+<button onclick="grade('${student}',1)">+1</button>
+<button onclick="grade('${student}',2)">+2</button>
+<button onclick="grade('${student}',3)">+3</button>
+
+<button onclick="grade('${student}',-1)">-1</button>
+
+<button onclick="markChecked('${student}','${id}')">Checked</button>
+
+<textarea placeholder="Comment..."
+
+onchange="saveComment('${student}',this.value)"></textarea>
+
+`;
+
+container.appendChild(div);
+
+index++;
+
+});
+
+});
+
+document.getElementById("uncheckedCounter").innerText=
+
+"Unchecked: "+unchecked;
+
+});
+
 }
+
+
+
+window.grade=async function(student,value){
+
+const scoreRef=ref(db,"rooms/"+currentRoom+"/scores/"+student);
+
+const snap=await get(scoreRef);
+
+let current=snap.exists()?snap.val():0;
+
+let newScore=current+value;
+
+if(newScore<0) newScore=0;
+
+await set(scoreRef,newScore);
+
+};
+
+
+
+window.markChecked=function(student,id){
+
+set(ref(db,"rooms/"+currentRoom+"/answers/"+student+"/"+id+"/checked"),true);
+
+};
+
+
 
 function listenLeaderboard(room){
-  onValue(ref(db,"rooms/"+room+"/scores"),(snapshot)=>{
 
-    const scores = snapshot.val();
-    const board = document.getElementById("leaderboardContainer");
-    board.innerHTML = "";
+onValue(ref(db,"rooms/"+room+"/scores"),snapshot=>{
 
-    if(!scores) return;
+const scores=snapshot.val();
 
-    const sorted = Object.entries(scores)
-      .sort((a,b)=>b[1]-a[1]);
+const board=document.getElementById("leaderboardContainer");
 
-    sorted.forEach(([name,pts],i)=>{
-      const medal = i==0?"🥇":i==1?"🥈":i==2?"🥉":"🐾";
-      board.innerHTML += `${medal} ${name} — ${pts} pts<br>`;
-    });
-  });
+board.innerHTML="";
+
+if(!scores) return;
+
+const sorted=Object.entries(scores)
+
+.sort((a,b)=>b[1]-a[1]);
+
+sorted.forEach(([name,pts],i)=>{
+
+const medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"🐾";
+
+board.innerHTML+=`${medal} ${name} — ${pts} pts<br>`;
+
+});
+
+});
+
 }
 
-window.setFilter = function(type){
-  currentFilter = type;
-  listenAnswers(currentRoom);
-}
 
-window.startTimer = function(){
-  const sec = parseInt(document.getElementById("timerInput").value);
-  if(!sec) return;
-  const end = Date.now()+sec*1000;
-  set(ref(db,"rooms/"+currentRoom+"/timer"),{endTime:end});
-}
 
-window.saveComment = function(student,text){
-  set(ref(db,"rooms/"+currentRoom+"/comments/"+student),text);
-}
+window.setFilter=function(type){
 
-window.clearAnswers = function(){
-  remove(ref(db,"rooms/"+currentRoom+"/answers"));
-}
+currentFilter=type;
 
-window.closeRoom = function(){
-  remove(ref(db,"rooms/"+currentRoom));
-}
+listenAnswers(currentRoom);
+
+};
+
+
+
+window.startTimer=function(){
+
+const sec=parseInt(document.getElementById("timerInput").value);
+
+if(!sec) return;
+
+const end=Date.now()+sec*1000;
+
+set(ref(db,"rooms/"+currentRoom+"/timer"),{endTime:end});
+
+};
+
+
+
+window.saveComment=function(student,text){
+
+set(ref(db,"rooms/"+currentRoom+"/comments/"+student),text);
+
+};
+
+
+
+window.clearAnswers=function(){
+
+remove(ref(db,"rooms/"+currentRoom+"/answers"));
+
+};
+
+
+
+window.closeRoom=function(){
+
+remove(ref(db,"rooms/"+currentRoom));
+
+};
+
+
 
 document.getElementById("searchInput").addEventListener("input",function(){
-  const value=this.value.toLowerCase();
-  const cards=document.querySelectorAll(".answer-card");
-  cards.forEach(card=>{
-    const name=card.getAttribute("data-name");
-    card.style.display=name.includes(value)?"block":"none";
-  });
+
+const value=this.value.toLowerCase();
+
+const cards=document.querySelectorAll(".answer-card");
+
+cards.forEach(card=>{
+
+const name=card.getAttribute("data-name");
+
+card.style.display=name.includes(value)?"block":"none";
+
 });
+
+});
+
 </script>
 
 </body>
