@@ -115,7 +115,7 @@ container.innerHTML+=`
 
 <button onclick="score('${student}',1)">+1</button>
 <button onclick="score('${student}',-1)">-1</button>
-
+<button onclick="gifComment('${student}')">GIF</button>
 <button onclick="shutup('${student}')">SHUT UP</button>
 
 <textarea placeholder="Teacher comment"
@@ -170,7 +170,18 @@ if(newScore<0)newScore=0;
 set(scoreRef,newScore);
 
 }
+window.gifComment=function(student){
 
+const gifs=[
+"comment.gif",
+"comment1.gif"
+]
+
+const random=Math.floor(Math.random()*gifs.length)
+
+set(ref(db,"rooms/"+room+"/gifcomment/"+student),gifs[random])
+
+}
 window.comment=function(student,text){
 
 set(ref(db,"rooms/"+room+"/comments/"+student),text)
