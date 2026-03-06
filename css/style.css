@@ -94,7 +94,15 @@ padding:15px;
 border-radius:12px;
 
 }
+.timer{
 
+font-size:24px;
+font-weight:bold;
+color:#7c3aed;
+
+margin:20px 0;
+
+}
 .gif-popup{
 
 position:fixed;
