@@ -1,40 +1,136 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta charset="UTF-8">
-<title>Black Cat Room</title>
+
+<title>Hi Pupils</title>
+
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f0f0f, #141414, #1a1f1c);
-    color: #e0ffe8;
-    text-align: center;
+
+body{
+margin:0;
+font-family:Arial, sans-serif;
+height:100vh;
+
+background:linear-gradient(
+135deg,
+#ffffff,
+#f3e8ff,
+#ffe4f0,
+#e6fff5
+);
+
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-h1 {
-    margin-top: 100px;
-    color: #00ff9d;
+.container{
+
+background:white;
+padding:60px;
+border-radius:20px;
+
+box-shadow:0 20px 40px rgba(0,0,0,0.1);
+
+text-align:center;
+
+width:420px;
+
 }
 
-button {
-    margin: 20px;
-    padding: 15px 30px;
-    background: #00ff9d;
-    border: none;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
+h1{
+
+margin-bottom:40px;
+
+color:#7c3aed;
+
+font-size:36px;
+
 }
 
-button:hover {
-    background: #00cc7a;
+button{
+
+margin:15px;
+padding:15px 40px;
+
+font-size:18px;
+font-weight:bold;
+
+border:none;
+border-radius:12px;
+
+cursor:pointer;
+
+transition:0.3s;
+
 }
+
+.teacher{
+
+background:#7c3aed;
+color:white;
+
+}
+
+.teacher:hover{
+
+background:#6d28d9;
+
+}
+
+.student{
+
+background:#10b981;
+color:white;
+
+}
+
+.student:hover{
+
+background:#059669;
+
+}
+
+.footer{
+
+margin-top:30px;
+font-size:14px;
+color:#777;
+
+}
+
 </style>
+
 </head>
+
 <body>
 
+<div class="container">
+
+<h1>🌸 Hi Pupils</h1>
+
+<a href="teacher.html">
+<button class="teacher">👩‍🏫 Teacher Panel</button>
+</a>
+
+<br>
+
+<a href="student.html">
+<button class="student">🎓 Student Panel</button>
+</a>
+
+<div class="footer">
+Class interaction system
+</div>
+
+</div>
+
+</body>
+
+</html>
 <h1>🐾 Black Cat Room</h1>
 
 <a href="teacher.html"><button>Teacher</button></a>
