@@ -44,6 +44,17 @@
 
 <div class="gif-popup" id="gifBox">
 <img id="gifImg">
+<div class="card">
+
+<h3>Lesson feedback</h3>
+
+<button onclick="feedback('good')">👍 I understand</button>
+
+<button onclick="feedback('middle')">😐 Middle</button>
+
+<button onclick="feedback('bad')">👎 I don't understand</button>
+
+
 </div>
 
 <script type="module">
@@ -118,7 +129,29 @@ showGif(score);
 lastScore=score;
 
 });
+onValue(ref(db,"rooms/"+room+"/timer"),snap=>{
 
+const endTime = snap.val()
+
+if(!endTime) return
+
+const interval = setInterval(()=>{
+
+const diff = endTime - Date.now()
+
+if(diff <= 0){
+
+clearInterval(interval)
+
+document.getElementById("answer").disabled = true
+
+alert("Time is over")
+
+}
+
+},1000)
+
+})
 onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
 
 const scores=snap.val();
@@ -172,7 +205,13 @@ time:Date.now()
 document.getElementById("answer").value="";
 
 }
+window.feedback=function(type){
 
+set(ref(db,"rooms/"+room+"/feedback/"+name),type)
+
+alert("Thanks for feedback!")
+
+}
 function showGif(points){
 
 const gifFile = scoreGifs[points];
