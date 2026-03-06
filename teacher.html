@@ -21,7 +21,10 @@
 
 <textarea id="task" placeholder="Write task"></textarea>
 
-<button onclick="sendTask()">Send Task</button>
+<input id="timerMinutes" placeholder="Minutes">
+<button onclick="startTimer()">Start Timer</button>
+
+<div id="timerDisplay"></div>
 
 <input id="search" placeholder="Search student">
 
@@ -96,7 +99,17 @@ set(ref(db,"rooms/"+room+"/task"),task);
 listen();
 
 }
+window.startTimer = function(){
 
+const minutes = document.getElementById("timerMinutes").value
+
+if(!minutes) return alert("Enter minutes")
+
+const endTime = Date.now() + minutes*60*1000
+
+set(ref(db,"rooms/"+room+"/timer"),endTime)
+
+}
 function listen(){
 
 onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
