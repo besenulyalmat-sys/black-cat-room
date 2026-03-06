@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<title>Hi Pupils — Teacher</title>
+<title>🌸 Hi Pupils — Teacher</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -17,21 +17,35 @@
 
 <header>👩‍🏫 Hi Pupils — Teacher</header>
 
-<input id="room">
+<input id="room" placeholder="Room">
 
 <textarea id="task"></textarea>
 
 <button onclick="sendTask()">Send Task</button>
 
+<input id="search" placeholder="Search student">
+
+<div class="layout">
+
+<div class="answers">
+
 <h3>Answers</h3>
 
 <div id="answers"></div>
+
+</div>
+
+<div class="sidebar">
 
 <div class="leaderboard">
 
 <h3>Leaderboard</h3>
 
 <div id="board"></div>
+
+</div>
+
+</div>
 
 </div>
 
@@ -64,7 +78,6 @@ const firebaseConfig = {
 };
 
 const app=initializeApp(firebaseConfig);
-
 const db=getDatabase(app);
 
 let room="";
@@ -101,14 +114,13 @@ const a=data[student][id];
 
 container.innerHTML+=`
 
-<div class="card">
+<div class="card answer-card" data-name="${student}">
 
 <b>${student}</b>
 
 <p>${a.text}</p>
 
 <button onclick="score('${student}',1)">+1</button>
-
 <button onclick="score('${student}',-1)">-1</button>
 
 </div>
@@ -118,6 +130,28 @@ container.innerHTML+=`
 }
 
 }
+
+});
+
+onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
+
+const scores=snap.val();
+
+if(!scores)return;
+
+const sorted=Object.entries(scores)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,10);
+
+let html="";
+
+sorted.forEach(([n,p])=>{
+
+html+=n+" — "+p+"<br>";
+
+});
+
+document.getElementById("board").innerHTML=html;
 
 });
 
@@ -138,6 +172,22 @@ if(newScore<0)newScore=0;
 set(refScore,newScore);
 
 }
+
+document.getElementById("search").addEventListener("input",function(){
+
+const value=this.value.toLowerCase();
+
+const cards=document.querySelectorAll(".answer-card");
+
+cards.forEach(card=>{
+
+const name=card.getAttribute("data-name");
+
+card.style.display=name.includes(value)?"block":"none";
+
+});
+
+});
 
 </script>
 
