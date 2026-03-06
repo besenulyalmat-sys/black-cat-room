@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<title>Hi Pupils — Student</title>
+<title>🌸 Hi Pupils — Student</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -82,7 +82,6 @@ const firebaseConfig = {
 };
 
 const app=initializeApp(firebaseConfig);
-
 const db=getDatabase(app);
 
 let room="";
@@ -96,13 +95,13 @@ name=document.getElementById("name").value;
 
 onValue(ref(db,"rooms/"+room+"/task"),snap=>{
 
-document.getElementById("task").innerText=snap.val();
+document.getElementById("task").innerText=snap.val()||"Waiting";
 
 });
 
 onValue(ref(db,"rooms/"+room+"/comments/"+name),snap=>{
 
-document.getElementById("comment").innerText=snap.val();
+document.getElementById("comment").innerText=snap.val()||"";
 
 });
 
@@ -127,9 +126,7 @@ const scores=snap.val();
 if(!scores)return;
 
 const sorted=Object.entries(scores)
-
 .sort((a,b)=>b[1]-a[1])
-
 .slice(0,10);
 
 let html="";
@@ -156,6 +153,8 @@ text:text,
 time:Date.now()
 
 });
+
+document.getElementById("answer").value="";
 
 }
 
