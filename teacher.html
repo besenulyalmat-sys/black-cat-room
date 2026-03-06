@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<title>🌸 Hi Pupils — Teacher</title>
+<title>👩‍🏫 Hi Pupils — Teacher</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -17,19 +17,25 @@
 
 <header>👩‍🏫 Hi Pupils — Teacher</header>
 
-<input id="room" placeholder="Room">
+<input id="room" placeholder="Room code">
 
-<textarea id="task"></textarea>
+<textarea id="task" placeholder="Write task"></textarea>
 
 <button onclick="sendTask()">Send Task</button>
 
 <input id="search" placeholder="Search student">
 
+<div class="counter">
+
+New answers: <span id="counter">0</span>
+
+</div>
+
 <div class="layout">
 
 <div class="answers">
 
-<h3>Answers</h3>
+<h3>Student Answers</h3>
 
 <div id="answers"></div>
 
@@ -81,6 +87,7 @@ const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
 let room="";
+let seen=new Set();
 
 window.sendTask=function(){
 
@@ -106,15 +113,27 @@ container.innerHTML="";
 
 if(!data)return;
 
+let counter=0;
+
 for(let student in data){
 
 for(let id in data[student]){
 
 const a=data[student][id];
 
+let cls="card";
+
+if(!seen.has(id)){
+
+cls+=" answer-new";
+seen.add(id);
+counter++;
+
+}
+
 container.innerHTML+=`
 
-<div class="card answer-card" data-name="${student}">
+<div class="${cls}" data-name="${student}">
 
 <b>${student}</b>
 
@@ -123,6 +142,8 @@ container.innerHTML+=`
 <button onclick="score('${student}',1)">+1</button>
 <button onclick="score('${student}',-1)">-1</button>
 
+<button onclick="shutup('${student}')">SHUT UP</button>
+
 </div>
 
 `;
@@ -130,6 +151,8 @@ container.innerHTML+=`
 }
 
 }
+
+document.getElementById("counter").innerText=counter;
 
 });
 
@@ -159,9 +182,9 @@ document.getElementById("board").innerHTML=html;
 
 window.score=async function(student,val){
 
-const refScore=ref(db,"rooms/"+room+"/scores/"+student);
+const scoreRef=ref(db,"rooms/"+room+"/scores/"+student);
 
-const snap=await get(refScore);
+const snap=await get(scoreRef);
 
 let current=snap.exists()?snap.val():0;
 
@@ -169,7 +192,13 @@ let newScore=current+val;
 
 if(newScore<0)newScore=0;
 
-set(refScore,newScore);
+set(scoreRef,newScore);
+
+}
+
+window.shutup=function(student){
+
+set(ref(db,"rooms/"+room+"/shutup/"+student),true);
 
 }
 
@@ -177,11 +206,13 @@ document.getElementById("search").addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
 
-const cards=document.querySelectorAll(".answer-card");
+const cards=document.querySelectorAll(".card");
 
 cards.forEach(card=>{
 
 const name=card.getAttribute("data-name");
+
+if(!name)return;
 
 card.style.display=name.includes(value)?"block":"none";
 
