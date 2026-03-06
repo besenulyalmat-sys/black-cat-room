@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="UTF-8">
-<title>Black Cat Room — Teacher 5.0</title>
+
+<title>Hi Pupils — Teacher</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -13,37 +15,23 @@
 
 <div class="container">
 
-<header>👨‍🏫 Teacher Panel</header>
+<header>👩‍🏫 Hi Pupils — Teacher</header>
 
-<input id="roomCode" placeholder="Room">
+<input id="room">
 
-<textarea id="taskInput" placeholder="Write task"></textarea>
+<textarea id="task"></textarea>
 
 <button onclick="sendTask()">Send Task</button>
 
-<button onclick="shutUp()">SHUT UP</button>
-
-<div class="flex">
-
-<div style="flex:1">
-
-<h3>Student Answers</h3>
+<h3>Answers</h3>
 
 <div id="answers"></div>
-
-</div>
-
-<div class="sidebar">
 
 <div class="leaderboard">
 
 <h3>Leaderboard</h3>
 
-<div id="leaderboard"></div>
-
-</div>
-
-</div>
+<div id="board"></div>
 
 </div>
 
@@ -58,36 +46,42 @@ import {
 getDatabase,
 ref,
 onValue,
-set
+set,
+get
 }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig={
-
-apiKey:"AIzaSy...",
-authDomain:"black-cat-room.firebaseapp.com",
-databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app"
-
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+  authDomain: "black-cat-room.firebaseapp.com",
+  databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "black-cat-room",
+  storageBucket: "black-cat-room.firebasestorage.app",
+  messagingSenderId: "80028312826",
+  appId: "1:80028312826:web:ee918db88c71a0c1335543",
+  measurementId: "G-9W8RSBP8WQ"
 };
 
 const app=initializeApp(firebaseConfig);
+
 const db=getDatabase(app);
 
 let room="";
 
 window.sendTask=function(){
 
-room=document.getElementById("roomCode").value;
+room=document.getElementById("room").value;
 
-const task=document.getElementById("taskInput").value;
+const task=document.getElementById("task").value;
 
 set(ref(db,"rooms/"+room+"/task"),task);
 
-listenAnswers();
+listen();
 
 }
 
-function listenAnswers(){
+function listen(){
 
 onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
 
@@ -101,11 +95,9 @@ if(!data)return;
 
 for(let student in data){
 
-const attempts=data[student];
+for(let id in data[student]){
 
-for(let id in attempts){
-
-const a=attempts[id];
+const a=data[student][id];
 
 container.innerHTML+=`
 
@@ -119,8 +111,6 @@ container.innerHTML+=`
 
 <button onclick="score('${student}',-1)">-1</button>
 
-<button onclick="comment('${student}')">Comment</button>
-
 </div>
 
 `;
@@ -133,41 +123,21 @@ container.innerHTML+=`
 
 }
 
-window.score=function(student,val){
+window.score=async function(student,val){
 
-set(ref(db,"rooms/"+room+"/scores/"+student),val);
+const refScore=ref(db,"rooms/"+room+"/scores/"+student);
 
-}
+const snap=await get(refScore);
 
-window.comment=function(student){
+let current=snap.exists()?snap.val():0;
 
-const text=prompt("Comment");
+let newScore=current+val;
 
-set(ref(db,"rooms/"+room+"/comments/"+student),text);
+if(newScore<0)newScore=0;
 
-}
-
-window.shutUp=function(){
-
-set(ref(db,"rooms/"+room+"/meme"),"shutup");
+set(refScore,newScore);
 
 }
-document.getElementById("searchInput").addEventListener("input",function(){
- const value=this.value.toLowerCase();
- const cards=document.querySelectorAll(".answer-card");
- cards.forEach(card=>{
- const name=card.getAttribute("data-name");
- card.style.display=name.includes(value)?"block":"none";
- });
-});
-</script>
-
-</body>
-</html>
-
-
-
-
 
 </script>
 
