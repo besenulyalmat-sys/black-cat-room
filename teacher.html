@@ -2,13 +2,9 @@
 <html>
 
 <head>
-
 <meta charset="UTF-8">
-
 <title>Hi Pupils — Teacher</title>
-
 <link rel="stylesheet" href="css/style.css">
-
 </head>
 
 <body>
@@ -21,10 +17,12 @@
 
 <textarea id="task" placeholder="Write task"></textarea>
 
+<button onclick="sendTask()">Send Task</button>
+
+<h3>Lesson Timer</h3>
+
 <input id="timerMinutes" placeholder="Minutes">
 <button onclick="startTimer()">Start Timer</button>
-
-<div id="timerDisplay"></div>
 
 <input id="search" placeholder="Search student">
 
@@ -33,7 +31,6 @@
 <div class="answers">
 
 <h3>Student Answers</h3>
-
 <div id="answers"></div>
 
 </div>
@@ -41,11 +38,13 @@
 <div class="sidebar">
 
 <div class="leaderboard">
-
 <h3>Leaderboard</h3>
-
 <div id="board"></div>
+</div>
 
+<div class="card">
+<h3>Lesson Feedback</h3>
+<div id="feedbackStats"></div>
 </div>
 
 </div>
@@ -69,13 +68,10 @@ get
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
-authDomain: "black-cat-room.firebaseapp.com",
-databaseURL: "https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "black-cat-room",
-storageBucket: "black-cat-room.firebasestorage.app",
-messagingSenderId: "80028312826",
-appId: "1:80028312826:web:ee918db88c71a0c1335543"
+apiKey:"AIzaSyBsrZ_k2K8u0ybvkEDoEywD_QWzmDTKjyY",
+authDomain:"black-cat-room.firebaseapp.com",
+databaseURL:"https://black-cat-room-default-rtdb.europe-west1.firebasedatabase.app",
+projectId:"black-cat-room"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -85,48 +81,41 @@ let room="";
 
 window.sendTask=function(){
 
-room=document.getElementById("room").value;
+room=document.getElementById("room").value
+const task=document.getElementById("task").value
 
-const task=document.getElementById("task").value;
+set(ref(db,"rooms/"+room+"/task"),task)
 
-if(!room || !task){
-alert("Enter room and task");
-return;
-}
-
-set(ref(db,"rooms/"+room+"/task"),task);
-
-listen();
+listen()
 
 }
-window.startTimer = function(){
 
-const minutes = document.getElementById("timerMinutes").value
+window.startTimer=function(){
 
-if(!minutes) return alert("Enter minutes")
+const minutes=document.getElementById("timerMinutes").value
 
-const endTime = Date.now() + minutes*60*1000
+const endTime = Date.now() + minutes*60000
 
 set(ref(db,"rooms/"+room+"/timer"),endTime)
 
 }
+
 function listen(){
 
 onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
 
-const data=snap.val();
+const data=snap.val()
+const container=document.getElementById("answers")
 
-const container=document.getElementById("answers");
+container.innerHTML=""
 
-container.innerHTML="";
-
-if(!data)return;
+if(!data) return
 
 for(let student in data){
 
 for(let id in data[student]){
 
-const a=data[student][id];
+const a=data[student][id]
 
 container.innerHTML+=`
 
@@ -138,57 +127,92 @@ container.innerHTML+=`
 
 <button onclick="score('${student}',1)">+1</button>
 <button onclick="score('${student}',-1)">-1</button>
+
 <button onclick="gifComment('${student}')">GIF</button>
+
 <button onclick="shutup('${student}')">SHUT UP</button>
 
 <textarea placeholder="Teacher comment"
-onchange="comment('${student}',this.value)"></textarea>
+onchange="comment('${student}',this.value)">
+</textarea>
 
 </div>
 
-`;
+`
 
 }
 
 }
 
-});
+})
 
 onValue(ref(db,"rooms/"+room+"/scores"),snap=>{
 
-const scores=snap.val();
+const scores=snap.val()
 
-if(!scores)return;
+if(!scores) return
 
 const sorted=Object.entries(scores)
 .sort((a,b)=>b[1]-a[1])
-.slice(0,10);
+.slice(0,10)
 
-let html="";
+let html=""
 
 sorted.forEach(([n,p])=>{
-html+=n+" — "+p+"<br>";
-});
+html+=n+" — "+p+"<br>"
+})
 
-document.getElementById("board").innerHTML=html;
+document.getElementById("board").innerHTML=html
 
-});
+})
+
+onValue(ref(db,"rooms/"+room+"/feedback"),snap=>{
+
+const data=snap.val()
+
+if(!data) return
+
+let good=0
+let middle=0
+let bad=0
+
+for(let s in data){
+
+if(data[s]=="good") good++
+if(data[s]=="middle") middle++
+if(data[s]=="bad") bad++
+
+}
+
+document.getElementById("feedbackStats").innerHTML=`
+👍 Understand: ${good}<br>
+😐 Middle: ${middle}<br>
+👎 Don't understand: ${bad}
+`
+
+})
 
 }
 
 window.score=async function(student,val){
 
-const scoreRef=ref(db,"rooms/"+room+"/scores/"+student);
+const scoreRef=ref(db,"rooms/"+room+"/scores/"+student)
 
-const snap=await get(scoreRef);
+const snap=await get(scoreRef)
 
-let current=snap.exists()?snap.val():0;
+let current=snap.exists()?snap.val():0
 
-let newScore=current+val;
+let newScore=current+val
 
-if(newScore<0)newScore=0;
+if(newScore<0)newScore=0
 
-set(scoreRef,newScore);
+set(scoreRef,newScore)
+
+}
+
+window.comment=function(student,text){
+
+set(ref(db,"rooms/"+room+"/comments/"+student),text)
 
 }
 
@@ -197,42 +221,35 @@ window.gifComment=function(student){
 const gifs=[
 "comment.gif",
 "comment1.gif"
-];
+]
 
-const random=Math.floor(Math.random()*gifs.length);
+const random=Math.floor(Math.random()*gifs.length)
 
-set(ref(db,"rooms/"+room+"/gifcomment/"+student),
-gifs[random]+"?t="+Date.now());
-
-}
-
-window.comment=function(student,text){
-
-set(ref(db,"rooms/"+room+"/comments/"+student),text);
+set(ref(db,"rooms/"+room+"/gifcomment/"+student),gifs[random])
 
 }
 
 window.shutup=function(student){
 
-set(ref(db,"rooms/"+room+"/shutup/"+student),Date.now());
+set(ref(db,"rooms/"+room+"/shutup/"+student),Date.now())
 
 }
 
 document.getElementById("search").addEventListener("input",function(){
 
-const value=this.value.toLowerCase();
+const value=this.value.toLowerCase()
 
-const cards=document.querySelectorAll(".card");
+const cards=document.querySelectorAll(".card")
 
 cards.forEach(card=>{
 
-const name=card.getAttribute("data-name");
+const name=card.getAttribute("data-name")
 
-card.style.display=name.includes(value)?"block":"none";
+card.style.display=name.includes(value)?"block":"none"
 
-});
+})
 
-});
+})
 
 </script>
 
