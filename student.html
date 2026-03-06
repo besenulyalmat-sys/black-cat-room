@@ -168,17 +168,28 @@ document.getElementById("answer").value="";
 
 function showGif(points){
 
+const gifs = {
+1:"1-ezgif.com-optimize.gif",
+2:"2-ezgif.com-optimize.gif",
+3:"3-ezgif.com-optimize.gif",
+4:"4-ezgif.com-optimize.gif",
+5:"5-ezgif.com-optimize.gif",
+6:"6-ezgif.com-optimize (1).gif",
+7:"7-ezgif.com-optimize.gif",
+8:"8-ezgif.com-optimize.gif",
+9:"9-ezgif.com-optimize.gif",
+10:"10-ezgif.com-optimize.gif"
+}
+
 const gif=document.getElementById("gifImg");
 const box=document.getElementById("gifBox");
 
-gif.src=points+"-ezgif.com-optimize.gif";
+gif.src=gifs[points];
 
 box.style.display="block";
 
 setTimeout(()=>{
-
 box.style.display="none";
-
 },3000);
 
 }
