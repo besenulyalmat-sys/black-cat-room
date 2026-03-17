@@ -18,7 +18,12 @@
 <textarea id="task" placeholder="Write task"></textarea>
 
 <button onclick="sendTask()">Send Task</button>
-
+<button onclick="clearRoom()" style="background:#ff4d6d;color:white;">
+🧹 Clear Room
+</button>
+<button onclick="clearAnswers()">
+🧹 Clear Answers Only
+</button>
 <h3>Lesson Timer</h3>
 
 <input id="timerMinutes" placeholder="Minutes">
@@ -99,7 +104,26 @@ const endTime = Date.now() + minutes*60000
 set(ref(db,"rooms/"+room+"/timer"),endTime)
 
 }
+window.clearRoom=function(){
 
+if(!room) return alert("Enter room first")
+
+if(!confirm("Clear ALL data in this room?")) return
+
+set(ref(db,"rooms/"+room), null)
+
+document.getElementById("answers").innerHTML=""
+document.getElementById("board").innerHTML=""
+document.getElementById("feedbackStats").innerHTML=""
+
+alert("Room cleared")
+
+}
+window.clearAnswers=function(){
+
+set(ref(db,"rooms/"+room+"/answers"), null)
+
+}
 function listen(){
 
 onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
