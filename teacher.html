@@ -89,8 +89,61 @@ window.sendTask=function(){
 room=document.getElementById("room").value
 const task=document.getElementById("task").value
 
+if(!room || !task) return alert("Fill fields")
+
 set(ref(db,"rooms/"+room+"/task"),task)
 
+// ВАЖНО: запускаем слушатели
+listen()
+
+}
+
+// ===== ANSWERS =====
+onValue(ref(db,"rooms/"+room+"/answers"),snap=>{
+
+const data=snap.val()
+const container=document.getElementById("answers")
+
+container.innerHTML=""
+
+if(!data) return
+
+for(let student in data){
+
+for(let id in data[student]){
+
+const a=data[student][id]
+
+container.innerHTML+=`
+
+<div class="card" data-name="${student}">
+
+<b>${student}</b>
+
+<p>${a.text}</p>
+
+<button onclick="score('${student}',1)">+1</button>
+<button onclick="score('${student}',-1)">-1</button>
+
+<button onclick="gifComment('${student}')">GIF</button>
+
+<button onclick="shutup('${student}')">SHUT UP</button>
+
+<textarea placeholder="Teacher comment"
+onchange="comment('${student}',this.value)">
+</textarea>
+
+</div>
+
+`
+
+}
+
+}
+
+})
+
+// ===== LEADERBOARD =====
 function listen(){
 
 // ===== ANSWERS =====
@@ -162,7 +215,7 @@ document.getElementById("board").innerHTML=html
 
 })
 
-// ===== FEEDBACK (ИСПРАВЛЕН) =====
+// ===== FEEDBACK =====
 onValue(ref(db,"rooms/"+room+"/feedback"),snap=>{
 
 const data=snap.val()
@@ -192,7 +245,6 @@ document.getElementById("feedbackStats").innerHTML=`
 })
 
 }
-
 window.score=async function(student,val){
 
 const scoreRef=ref(db,"rooms/"+room+"/scores/"+student)
